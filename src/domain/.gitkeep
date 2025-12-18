@@ -1,0 +1,13 @@
+# Domain Module - Entity Definitions
+# This directory will contain:
+# - Agent entity
+# - Skill entity
+# - Workflow entity
+# - Feature entity
+# - Session entity
+# - Worktree entity
+# - Handoff entity
+# - Integration entity
+# - Repository interfaces
+#
+# Implementation in Phase 3

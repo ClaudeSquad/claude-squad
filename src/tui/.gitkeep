@@ -1,0 +1,9 @@
+# TUI Module - Presentation Layer
+# This directory will contain:
+# - OpenTUI Renderer
+# - Screens (Dashboard, Agents, Features)
+# - Components (StatusBar, AgentPanel, Progress)
+# - Overlays (Help, Alerts, Modals)
+# - Wizards (Create Agent, Edit Workflow)
+#
+# Implementation in Phase 6+

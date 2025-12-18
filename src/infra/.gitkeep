@@ -1,0 +1,12 @@
+# Infrastructure Module
+# This directory will contain:
+# - SQLite Database Service
+# - Git Operations (worktrees, branches)
+# - Claude CLI Integration
+# - Keychain (secrets storage)
+# - External API Integrations:
+#   - GitHub API
+#   - Linear API
+#   - Slack API
+#
+# Implementation in Phase 2+

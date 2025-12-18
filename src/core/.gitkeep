@@ -1,0 +1,11 @@
+# Core Module - Domain Layer
+# This directory will contain:
+# - CommandRouter
+# - WorkflowEngine
+# - AgentOrchestrator
+# - SessionManager
+# - FeatureManager
+# - ContextBuilder
+# - WorktreeManager
+#
+# Implementation in Phase 3+

@@ -1,0 +1,49 @@
+{
+  "name": "claude-squad",
+  "version": "0.1.0",
+  "description": "Multi-agent orchestration system that transforms solo developers into AI-powered development teams",
+  "type": "module",
+  "main": "src/cli/index.ts",
+  "bin": {
+    "squad": "./bin/squad"
+  },
+  "scripts": {
+    "cli": "bun run src/cli/index.ts",
+    "dev": "bun --watch run src/cli/index.ts",
+    "build": "bun build src/cli/index.ts --outdir dist --target bun --minify",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "bunx @biomejs/biome check .",
+    "lint:fix": "bunx @biomejs/biome check --write .",
+    "format": "bunx @biomejs/biome format --write ."
+  },
+  "dependencies": {
+    "yaml": "^2.7.0",
+    "zod": "^3.24.2",
+    "nanoid": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.14",
+    "typescript": "^5.7.2",
+    "@biomejs/biome": "^1.9.4"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "keywords": [
+    "claude",
+    "ai",
+    "agents",
+    "orchestration",
+    "cli",
+    "development",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/claude-squad"
+  }
+}

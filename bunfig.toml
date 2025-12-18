@@ -1,0 +1,37 @@
+# Bun configuration for Claude Squad
+# https://bun.sh/docs/runtime/bunfig
+
+[install]
+# Lockfile location
+lockfile = true
+
+# Install peer dependencies automatically
+peer = true
+
+# Production mode excludes devDependencies
+production = false
+
+[install.cache]
+# Cache packages locally
+dir = ".bun-cache"
+disable = false
+
+[test]
+# Test configuration
+coverage = true
+coverageDir = "coverage"
+coverageReporter = ["text", "lcov"]
+
+# Preload test setup file
+preload = ["./tests/setup.ts"]
+
+# Test file patterns
+include = ["**/*.test.ts", "**/*.spec.ts"]
+exclude = ["node_modules", "dist"]
+
+[run]
+# Silent mode for cleaner output
+silent = false
+
+# Use system shell for scripts
+shell = "system"
