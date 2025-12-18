@@ -14,7 +14,7 @@
  */
 
 import { createInterface } from "readline";
-import { stringify as yamlStringify } from "yaml";
+import "yaml";
 import { join, basename } from "path";
 import type { PartialSquadConfig } from "../config/schema.js";
 import { saveProjectConfig, isInitialized, getProjectConfigPath } from "../config/loader.js";
@@ -230,6 +230,7 @@ async function initExistingProject(
       sourceControl: sourceControl === "none" ? undefined : (sourceControl as any),
       issueTracking: issueTracking === "none" ? undefined : (issueTracking as any),
       communication: communication as any,
+      designDocs: [],
     },
   };
 
@@ -398,6 +399,7 @@ async function initNewProject(
       sourceControl: sourceControl === "none" ? undefined : (sourceControl as any),
       issueTracking: issueTracking === "none" ? undefined : (issueTracking as any),
       communication: communication as any,
+      designDocs: [],
     },
   };
 

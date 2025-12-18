@@ -159,7 +159,7 @@ async function getConfigValue(key: string): Promise<void> {
 /**
  * Set a configuration value
  */
-async function setConfigValue(key: string, value: string): Promise<void> {
+async function setConfigValue(_key: string, _value: string): Promise<void> {
   // This will be implemented in Phase 2 when we have full config management
   console.log(`${colors.yellow}⚠${colors.reset} Setting configuration values is not yet implemented.`);
   console.log(`\nTo change configuration, edit the config file directly:`);

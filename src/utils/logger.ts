@@ -135,9 +135,23 @@ function log(level: LogLevel, message: string, context?: Record<string, unknown>
 }
 
 /**
- * Logger interface
+ * Logger interface type
  */
-export const logger = {
+interface Logger {
+  debug(message: string, context?: Record<string, unknown>): void;
+  info(message: string, context?: Record<string, unknown>): void;
+  warn(message: string, context?: Record<string, unknown>): void;
+  error(message: string, context?: Record<string, unknown>): void;
+  configure(newConfig: Partial<LoggerConfig>): void;
+  setLevel(level: LogLevel): void;
+  setPrefix(prefix: string): void;
+  child(prefix: string): Logger;
+}
+
+/**
+ * Logger instance
+ */
+export const logger: Logger = {
   /**
    * Log a debug message
    */
@@ -190,7 +204,7 @@ export const logger = {
   /**
    * Create a child logger with a prefix
    */
-  child(prefix: string): typeof logger {
+  child(prefix: string): Logger {
     const childConfig = { ...config, prefix };
 
     return {

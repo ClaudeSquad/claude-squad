@@ -244,11 +244,11 @@ function parseArguments(): ParsedArgs {
     command: command ?? null,
     args,
     options: {
-      help: values.help ?? false,
-      version: values.version ?? false,
-      debug: values.debug ?? false,
-      cwd: values.cwd,
-      config: values.config,
+      help: Boolean(values.help),
+      version: Boolean(values.version),
+      debug: Boolean(values.debug),
+      cwd: typeof values.cwd === "string" ? values.cwd : undefined,
+      config: typeof values.config === "string" ? values.config : undefined,
     },
   };
 }
@@ -264,7 +264,7 @@ function exitWithError(message: string, code = 1): never {
 /**
  * Print a success message
  */
-function printSuccess(message: string): void {
+export function printSuccess(message: string): void {
   console.log(`${colors.green}✓${colors.reset} ${message}`);
 }
 

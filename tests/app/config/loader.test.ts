@@ -199,7 +199,10 @@ describe("saveProjectConfig", () => {
     const config = {
       projectName: "saved-project",
       defaults: {
+        workflow: "feature",
         model: "opus" as const,
+        maxConcurrentAgents: 5,
+        reviewGateBehavior: "pause" as const,
       },
     };
 
