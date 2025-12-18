@@ -33,3 +33,8 @@ export {
   IntegrationRepository,
   createIntegrationRepository,
 } from "./integration.repository.js";
+
+export {
+  HandoffRepository,
+  createHandoffRepository,
+} from "./handoff.repository.js";
