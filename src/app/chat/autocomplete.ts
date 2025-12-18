@@ -17,7 +17,7 @@ import type {
   ArgumentHint,
   ConversationContext,
 } from "./types.js";
-import type { CommandDefinition, ArgumentDefinition } from "../../core/commands/types.js";
+import type { CommandDefinition } from "../../core/commands/types.js";
 import { CommandRouter } from "../../core/commands/router.js";
 
 // ============================================================================
@@ -210,9 +210,7 @@ export class AutocompleteEngine {
       case "argument":
         return this.completeArgument(
           parsed.command!,
-          parsed.argumentName,
-          parsed.prefix,
-          context
+          parsed.prefix
         );
 
       case "value":
@@ -490,8 +488,7 @@ export class AutocompleteEngine {
    */
   private completeArgument(
     commandName: string,
-    prefix: string = "",
-    _context: ConversationContext
+    prefix: string = ""
   ): AutocompleteResult {
     const command = this.router.get(commandName);
     if (!command?.arguments) {

@@ -134,7 +134,8 @@ describe("AutocompleteEngine", () => {
       // Should still match "feature" with fuzzy matching
       const hasFeature = result.suggestions.some((s) => s.text === "/feature");
       // Fuzzy matching may or may not match depending on threshold
-      expect(result.suggestions.length).toBeGreaterThanOrEqual(0);
+      // Either we get the feature match or we get no results due to score threshold
+      expect(hasFeature || result.suggestions.length === 0).toBe(true);
     });
 
     it("should sort by match score", async () => {

@@ -24,7 +24,6 @@ import {
   createDefaultContext,
   createMessageResponse,
   createErrorResponse,
-  createNavigationResponse,
 } from "./types.js";
 import type { SessionId, FeatureId, AgentId } from "../../core/types/id.js";
 import type { CommandContext, CommandResult } from "../../core/commands/types.js";
@@ -117,7 +116,7 @@ export class ChatHandler {
   async processInput(input: string): Promise<ChatResponse> {
     // Emit input event
     this.events.emit({
-      type: "CHAT_INPUT" as any,
+      type: "CHAT_INPUT",
       input,
       timestamp: Date.now(),
     });
@@ -150,10 +149,15 @@ export class ChatHandler {
       intent: response.data as UserIntent | undefined,
     });
 
-    // Emit response event
+    // Emit chat response event
     this.events.emit({
-      type: "CHAT_RESPONSE" as any,
-      response,
+      type: "CHAT_RESPONSE",
+      input,
+      response: {
+        content: response.content,
+        type: response.type,
+        success: response.success,
+      },
       timestamp: Date.now(),
     });
 
@@ -177,10 +181,16 @@ export class ChatHandler {
     // Classify the intent
     const classification = await this.classifier.classify(input, this.context);
 
-    // Emit classification event
+    // Emit intent classified event
     this.events.emit({
-      type: "INTENT_CLASSIFIED" as any,
-      result: classification,
+      type: "INTENT_CLASSIFIED",
+      input,
+      result: {
+        intentType: classification.intent.type,
+        method: classification.method,
+        classificationTimeMs: classification.classificationTimeMs,
+        cached: classification.cached,
+      },
       timestamp: Date.now(),
     });
 
@@ -412,13 +422,7 @@ export class ChatHandler {
     }
 
     this.context.lastUpdated = new Date();
-
-    // Emit context update event
-    this.events.emit({
-      type: "CONTEXT_UPDATED" as any,
-      context: this.context,
-      timestamp: Date.now(),
-    });
+    // Note: Context updates are internal and don't need event emission
   }
 
   // ============================================================================

@@ -264,7 +264,7 @@ export class MacOSKeychainProvider implements KeychainProvider {
    * Note: macOS security CLI doesn't provide a clean way to list
    * accounts for a service. This is a limited implementation.
    */
-  async list(service: string): Promise<KeychainResult<KeychainEntry[]>> {
+  async list(_service: string): Promise<KeychainResult<KeychainEntry[]>> {
     // macOS doesn't have a direct way to list accounts for a service
     // We could parse dump-keychain output, but that exposes all passwords
     // For security reasons, we return a placeholder implementation

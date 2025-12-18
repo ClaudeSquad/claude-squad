@@ -95,7 +95,7 @@ export class MigrationManager {
     for (const file of files) {
       // Match files like 001_initial_schema.sql
       const match = file.match(/^(\d+)_.+\.sql$/);
-      if (match) {
+      if (match && match[1]) {
         migrations.push({
           name: file.replace(/\.sql$/, ""),
           path: join(this.migrationsDir, file),
@@ -196,10 +196,11 @@ export class MigrationManager {
     const applied = this.getAppliedMigrations();
     const pending = await this.getPendingMigrations();
 
+    const lastApplied = applied.length > 0 ? applied[applied.length - 1] : undefined;
     return {
       applied,
       pending,
-      current: applied.length > 0 ? applied[applied.length - 1].name : null,
+      current: lastApplied?.name ?? null,
     };
   }
 

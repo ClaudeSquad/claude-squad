@@ -13,7 +13,6 @@ import type {
   UserIntent,
   ConversationContext,
   ClassificationResult,
-  CommandIntent,
   ClarificationIntent,
   UnknownIntent,
 } from "./types.js";
@@ -268,7 +267,7 @@ export class IntentClassifier {
    */
   private classifyByKeywords(
     input: string,
-    context: ConversationContext
+    _context: ConversationContext
   ): UserIntent | undefined {
     const keywords = extractKeywords(input);
 
@@ -307,12 +306,9 @@ export class IntentClassifier {
     input: string,
     context: ConversationContext
   ): Promise<UserIntent | undefined> {
-    // Build context summary for Claude
-    const _contextSummary = this.buildContextSummary(context);
-
-    // TODO: Implement actual Claude API call
-    // For now, return undefined to fall through to clarification
-    // This will be implemented when the Claude CLI integration is complete
+    // TODO: Implement actual Claude API call when Claude CLI integration is complete
+    // Build context summary for future Claude classification
+    void this.buildContextSummary(context);
 
     // Stub implementation - try to make a reasonable guess based on context
     return this.makeContextualGuess(input, context);
@@ -320,6 +316,7 @@ export class IntentClassifier {
 
   /**
    * Build a context summary for Claude classification.
+   * Note: Reserved for future Claude API integration.
    */
   private buildContextSummary(context: ConversationContext): string {
     const parts: string[] = [];

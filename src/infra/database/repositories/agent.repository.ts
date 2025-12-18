@@ -6,7 +6,7 @@
  */
 
 import type { DatabaseService } from "../connection.js";
-import { BaseRepository, DateColumn, JsonColumn, type QueryOptions } from "../repository.js";
+import { BaseRepository, DateColumn, JsonColumn } from "../repository.js";
 import type {
   Agent,
   CreateAgent,
@@ -67,7 +67,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
    * Convert database row to Agent entity
    */
   protected rowToEntity(row: Record<string, unknown>): Agent {
-    const r = row as AgentRow;
+    const r = row as unknown as AgentRow;
     return {
       id: r.id,
       sessionId: r.session_id,
@@ -185,7 +185,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
       `SELECT * FROM ${this.tableName} WHERE session_id = ? ORDER BY created_at ASC`,
       [sessionId]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -196,7 +196,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
       `SELECT * FROM ${this.tableName} WHERE role = ? ORDER BY created_at DESC`,
       [role]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -207,7 +207,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
       `SELECT * FROM ${this.tableName} WHERE status = ? ORDER BY updated_at DESC`,
       [status]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -219,7 +219,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
        WHERE status IN ('working', 'waiting')
        ORDER BY updated_at DESC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -230,7 +230,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
       `SELECT * FROM ${this.tableName} WHERE model = ? ORDER BY created_at DESC`,
       [model]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -243,7 +243,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
        ORDER BY created_at DESC`,
       [`%"${skillId}"%`]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -254,7 +254,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
       `SELECT * FROM ${this.tableName} WHERE pid = ?`,
       [pid]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -265,7 +265,7 @@ export class AgentRepository extends BaseRepository<Agent, CreateAgent, UpdateAg
       `SELECT * FROM ${this.tableName} WHERE worktree_path = ?`,
       [worktreePath]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   // ==========================================================================

@@ -51,9 +51,9 @@ describe("ChatHandler", () => {
           positional: true,
         },
       ],
-      handler: async (ctx) => ({
+      handler: async (args) => ({
         success: true,
-        message: `Starting feature: ${ctx.args?.description || "untitled"}`,
+        message: `Starting feature: ${args.positional[0] || "untitled"}`,
       }),
     });
 
@@ -402,7 +402,7 @@ describe("ChatHandler", () => {
       router.register({
         name: "broken",
         description: "Broken command",
-        category: "test",
+        category: "system",
         handler: async () => {
           throw new Error("Test error");
         },

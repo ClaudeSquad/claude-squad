@@ -6,7 +6,7 @@
  */
 
 import type { DatabaseService } from "../connection.js";
-import { BaseRepository, DateColumn, JsonColumn, type QueryOptions } from "../repository.js";
+import { BaseRepository, DateColumn, JsonColumn } from "../repository.js";
 import type {
   Skill,
   CreateSkill,
@@ -58,7 +58,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
    * Convert database row to Skill entity
    */
   protected rowToEntity(row: Record<string, unknown>): Skill {
-    const r = row as SkillRow;
+    const r = row as unknown as SkillRow;
     return {
       id: r.id,
       name: r.name,
@@ -162,7 +162,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
       `SELECT * FROM ${this.tableName} WHERE name = ?`,
       [name]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -172,7 +172,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
     const rows = this.query<SkillRow>(
       `SELECT * FROM ${this.tableName} WHERE is_active = 1 ORDER BY name ASC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -183,7 +183,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
       `SELECT * FROM ${this.tableName} WHERE source = ? ORDER BY name ASC`,
       [source]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -210,7 +210,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
        ORDER BY name ASC`,
       [`%"${tag}"%`]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -228,7 +228,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
        ORDER BY name ASC`,
       params
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -242,7 +242,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
        ORDER BY name ASC`,
       [searchTerm, searchTerm]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -253,7 +253,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
       `SELECT * FROM ${this.tableName} WHERE author = ? ORDER BY name ASC`,
       [author]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   // ==========================================================================
@@ -303,7 +303,7 @@ export class SkillRepository extends BaseRepository<Skill, CreateSkill, UpdateSk
        ORDER BY version DESC`,
       [name]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   // ==========================================================================

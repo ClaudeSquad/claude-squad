@@ -6,9 +6,8 @@
  */
 
 import { join, basename } from "node:path";
-import { rm, mkdir, access } from "node:fs/promises";
+import { mkdir, access } from "node:fs/promises";
 import { GitService } from "./service.js";
-import type { Worktree as GitWorktree } from "./types.js";
 import { generateId } from "../../utils/id.js";
 
 /**
@@ -197,7 +196,7 @@ export class WorktreeManager {
 
     // Create allocation record
     const allocation: WorktreeAllocation = {
-      id: generateId("wta"), // worktree allocation
+      id: `wta_${generateId()}`, // worktree allocation
       repoPath,
       worktreePath,
       branch,

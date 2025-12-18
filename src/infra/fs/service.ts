@@ -5,7 +5,7 @@
  * files and directories using Bun's native file system APIs.
  */
 
-import { mkdir, readdir, rm, stat, access, watch, type FSWatcher } from "node:fs/promises";
+import { mkdir, readdir, rm, stat, access, watch } from "node:fs/promises";
 import { join, dirname, basename, extname, resolve, relative } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
@@ -491,7 +491,7 @@ export class FileSystemService {
       };
     }
 
-    const frontmatter = parseYaml(match[1]) as T;
+    const frontmatter = parseYaml(match[1] ?? "") as T;
     const content = match[2]?.trim() ?? "";
 
     return { frontmatter, content };

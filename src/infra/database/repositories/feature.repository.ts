@@ -6,7 +6,7 @@
  */
 
 import type { DatabaseService } from "../connection.js";
-import { BaseRepository, DateColumn, JsonColumn, type QueryOptions } from "../repository.js";
+import { BaseRepository, DateColumn, JsonColumn } from "../repository.js";
 import type {
   Feature,
   CreateFeature,
@@ -65,7 +65,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
    * Convert database row to Feature entity
    */
   protected rowToEntity(row: Record<string, unknown>): Feature {
-    const r = row as FeatureRow;
+    const r = row as unknown as FeatureRow;
     return {
       id: r.id,
       name: r.name,
@@ -200,7 +200,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE status = ? ORDER BY updated_at DESC`,
       [status]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -211,7 +211,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE workflow_id = ? ORDER BY created_at DESC`,
       [workflowId]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -222,7 +222,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE session_id = ? ORDER BY created_at DESC`,
       [sessionId]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -233,7 +233,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE external_id = ?`,
       [externalId]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -244,7 +244,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE branch_name = ?`,
       [branchName]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -256,7 +256,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
        WHERE status NOT IN ('completed', 'cancelled')
        ORDER BY priority DESC, updated_at DESC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -267,7 +267,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE priority = ? ORDER BY updated_at DESC`,
       [priority]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -281,7 +281,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
        ORDER BY updated_at DESC`,
       [`%"${tag}"%`]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -294,7 +294,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
        ORDER BY priority DESC, updated_at DESC`,
       [`%"${assignee}"%`]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   // ==========================================================================
@@ -316,7 +316,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
       `SELECT * FROM ${this.tableName} WHERE current_stage = ? ORDER BY updated_at DESC`,
       [stageId]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   // ==========================================================================
@@ -344,7 +344,7 @@ export class FeatureRepository extends BaseRepository<Feature, CreateFeature, Up
 
     this.db.run(
       `UPDATE ${this.tableName} SET ${setClause} WHERE id = ?`,
-      [...values, id]
+      [...(values as (string | number | null)[]), id]
     );
   }
 

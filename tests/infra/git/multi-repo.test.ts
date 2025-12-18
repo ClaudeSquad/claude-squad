@@ -5,7 +5,7 @@
  * across multiple repositories.
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import {
   MultiRepoManager,
   createMultiRepoManager,
@@ -15,7 +15,6 @@ import {
   type PR,
 } from "../../../src/infra/git/multi-repo.js";
 import { WorktreeManager } from "../../../src/infra/git/worktree-manager.js";
-import { GitService } from "../../../src/infra/git/service.js";
 import type { Feature } from "../../../src/core/entities/feature.js";
 
 // ============================================================================
@@ -29,38 +28,6 @@ mock.module("node:fs/promises", () => ({
   mkdir: mock(() => Promise.resolve()),
   rm: mock(() => Promise.resolve()),
 }));
-
-// Create mock GitService
-const createMockGitService = () => ({
-  isGitRepo: mock(() => Promise.resolve(true)),
-  listWorktrees: mock(() => Promise.resolve([
-    {
-      path: "/test/worktrees/feature-test",
-      head: "abc123",
-      branch: "feature/test",
-      isMain: false,
-      isLocked: false,
-      isPrunable: false,
-    },
-  ])),
-  createWorktree: mock(() => Promise.resolve()),
-  removeWorktree: mock(() => Promise.resolve()),
-  commit: mock(() => Promise.resolve("abc123def456")),
-  isClean: mock(() => Promise.resolve(false)),
-  getStatus: mock(() => Promise.resolve({
-    branch: "feature/test",
-    ahead: 2,
-    behind: 0,
-    files: [{ path: "test.ts", indexStatus: "M", worktreeStatus: " " }],
-    hasStaged: true,
-    hasUnstaged: false,
-    hasUntracked: false,
-  })),
-  getCurrentBranch: mock(() => Promise.resolve("main")),
-  branchExists: mock(() => Promise.resolve(false)),
-  deleteBranch: mock(() => Promise.resolve()),
-  pruneWorktrees: mock(() => Promise.resolve()),
-});
 
 // Create mock WorktreeManager
 const createMockWorktreeManager = () => ({
@@ -202,11 +169,9 @@ describe("Multi-Repo Types", () => {
 describe("MultiRepoManager", () => {
   let manager: MultiRepoManager;
   let mockWorktreeManager: ReturnType<typeof createMockWorktreeManager>;
-  let mockGitServices: Map<string, ReturnType<typeof createMockGitService>>;
 
   beforeEach(() => {
     mockWorktreeManager = createMockWorktreeManager();
-    mockGitServices = new Map();
 
     // Reset access mock
     mockAccess.mockReset();
@@ -233,10 +198,6 @@ describe("MultiRepoManager", () => {
 
     it("should validate all repositories exist", async () => {
       const config = createTestConfig();
-
-      // Mock GitService.isGitRepo
-      const originalGitService = GitService;
-      const mockIsGitRepo = mock(() => Promise.resolve(true));
 
       // This test is challenging due to internal instantiation
       // We'll test the error path instead

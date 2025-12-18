@@ -8,7 +8,6 @@
 import type {
   KeychainProvider,
   KeychainResult,
-  KeychainEntry,
   KeychainProviderType,
   StoreOptions,
   RetrieveOptions,

@@ -10,7 +10,7 @@ import {
   createKeychainService,
 } from "../../../src/infra/keychain/service.js";
 import { MemoryKeychainProvider } from "../../../src/infra/keychain/providers/memory.js";
-import { KEYCHAIN_SERVICES, API_KEY_ACCOUNTS } from "../../../src/infra/keychain/types.js";
+import { API_KEY_ACCOUNTS } from "../../../src/infra/keychain/types.js";
 
 describe("KeychainService", () => {
   let service: KeychainService;

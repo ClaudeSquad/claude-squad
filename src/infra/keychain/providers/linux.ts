@@ -94,10 +94,10 @@ export class LinuxSecretServiceProvider implements KeychainProvider {
         stderr: "pipe",
       });
 
-      // Write secret to stdin
-      const writer = proc.stdin.getWriter();
-      await writer.write(new TextEncoder().encode(secret));
-      await writer.close();
+      // Write secret to stdin using Bun's FileSink
+      const stdin = proc.stdin as import("bun").FileSink;
+      stdin.write(new TextEncoder().encode(secret));
+      stdin.end();
 
       const [exitCode, stderr] = await Promise.all([
         proc.exited,
@@ -311,12 +311,12 @@ export class LinuxSecretServiceProvider implements KeychainProvider {
       const accountMatch = block.match(/attribute\.account\s*=\s*(.+)/);
       const labelMatch = block.match(/label\s*=\s*(.+)/);
 
-      if (accountMatch) {
+      if (accountMatch && accountMatch[1]) {
         entries.push({
           service,
           account: accountMatch[1].trim(),
           secret: "", // search output doesn't include secrets by default
-          label: labelMatch?.[1].trim(),
+          label: labelMatch?.[1]?.trim(),
         });
       }
     }

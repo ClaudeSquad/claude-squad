@@ -2,13 +2,17 @@
  * TUI Application Shell
  *
  * Main application component that provides the layout structure
- * with header, content area, and footer.
+ * with header, content area, footer, and command prompt.
  */
 
+import { useState, useCallback } from "react";
 import { useKeyboard } from "@opentui/react";
 import { Header } from "./components/header.js";
 import { Footer } from "./components/footer.js";
-import { ScreenRouter, RouterProvider } from "./router.js";
+import { CommandPrompt } from "./components/command-prompt.js";
+import { ScreenRouter, RouterProvider, useRouter } from "./router.js";
+import { getChatHandler } from "../app/chat/index.js";
+import type { ChatResponse, AutocompleteResult } from "../app/chat/types.js";
 
 /**
  * Application state from external sources
@@ -43,9 +47,58 @@ export interface AppProps {
 /**
  * Main App Content
  *
- * Contains the actual layout with header, content, and footer.
+ * Contains the actual layout with header, content, command prompt, and footer.
  */
 function AppContent({ state = {}, onExit }: AppProps) {
+  // Chat handler for processing commands
+  const chatHandler = getChatHandler();
+  const router = useRouter();
+
+  // Command history for navigation
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+
+  // Last response for display
+  const [lastResponse, setLastResponse] = useState<ChatResponse | null>(null);
+
+  // Handle command submission
+  const handleSubmit = useCallback(
+    async (input: string) => {
+      // Add to history
+      setCommandHistory((prev) => [...prev, input]);
+
+      // Process through chat handler
+      try {
+        const response = await chatHandler.processInput(input);
+        setLastResponse(response);
+
+        // Handle navigation actions
+        if (response.actions) {
+          for (const action of response.actions) {
+            if (action.type === "navigate" && action.payload) {
+              const payload = action.payload as { screen: string };
+              router.navigate(payload.screen as any);
+            }
+          }
+        }
+      } catch (error) {
+        setLastResponse({
+          content: error instanceof Error ? error.message : "An error occurred",
+          type: "error",
+          success: false,
+        });
+      }
+    },
+    [chatHandler, router]
+  );
+
+  // Handle autocomplete
+  const handleAutocomplete = useCallback(
+    async (input: string): Promise<AutocompleteResult> => {
+      return chatHandler.getAutocompleteSuggestions(input);
+    },
+    [chatHandler]
+  );
+
   // Global keyboard shortcuts
   useKeyboard((key) => {
     // Ctrl+C to exit
@@ -72,6 +125,38 @@ function AppContent({ state = {}, onExit }: AppProps) {
       {/* Main content area */}
       <box flexGrow={1} flexDirection="column">
         <ScreenRouter />
+
+        {/* Display last response if any */}
+        {lastResponse && lastResponse.content && (
+          <box paddingLeft={1} paddingRight={1} paddingTop={1}>
+            <text>
+              <span
+                fg={
+                  lastResponse.type === "error"
+                    ? "red"
+                    : lastResponse.type === "command"
+                    ? "green"
+                    : "white"
+                }
+              >
+                {lastResponse.content}
+              </span>
+            </text>
+          </box>
+        )}
+      </box>
+
+      {/* Command Prompt */}
+      <box paddingLeft={1} paddingRight={1}>
+        <CommandPrompt
+          prompt="> "
+          placeholder="Type a command or message..."
+          history={commandHistory}
+          onSubmit={handleSubmit}
+          onAutocomplete={handleAutocomplete}
+          focused={true}
+          enableAutocomplete={true}
+        />
       </box>
 
       {/* Footer */}

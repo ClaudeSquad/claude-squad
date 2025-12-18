@@ -206,6 +206,38 @@ export interface UserInputEvent {
 }
 
 /**
+ * Chat events
+ */
+export interface ChatInputEvent {
+  type: "CHAT_INPUT";
+  input: string;
+  timestamp: number;
+}
+
+export interface ChatResponseEvent {
+  type: "CHAT_RESPONSE";
+  input: string;
+  response: {
+    content: string;
+    type: string;
+    success: boolean;
+  };
+  timestamp: number;
+}
+
+export interface IntentClassifiedEvent {
+  type: "INTENT_CLASSIFIED";
+  input: string;
+  result: {
+    intentType: string;
+    method: string;
+    classificationTimeMs: number;
+    cached: boolean;
+  };
+  timestamp: number;
+}
+
+/**
  * System events
  */
 export interface SystemErrorEvent {
@@ -257,6 +289,10 @@ export type DomainEvent =
   // UI events
   | ScreenChangedEvent
   | UserInputEvent
+  // Chat events
+  | ChatInputEvent
+  | ChatResponseEvent
+  | IntentClassifiedEvent
   // System events
   | SystemErrorEvent
   | SystemShutdownEvent;

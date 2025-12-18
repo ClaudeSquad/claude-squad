@@ -16,7 +16,6 @@ import {
   updateAgent,
   AGENT_ROLE_DESCRIPTIONS,
   AGENT_STATUS_DESCRIPTIONS,
-  type Agent,
   type AgentRole,
   type AgentStatus,
 } from "../../../src/core/entities/agent";
@@ -284,7 +283,7 @@ describe("createAgent", () => {
       skills,
       tools,
       systemPrompt: "Custom prompt",
-      config: { maxTurns: 100 },
+      config: { maxTurns: 100, verbose: true, timeout: 600000, permissionMode: "strict" },
     });
 
     expect(agent.status).toBe("working");
@@ -292,6 +291,8 @@ describe("createAgent", () => {
     expect(agent.tools).toEqual(tools);
     expect(agent.systemPrompt).toBe("Custom prompt");
     expect(agent.config.maxTurns).toBe(100);
+    expect(agent.config.verbose).toBe(true);
+    expect(agent.config.permissionMode).toBe("strict");
   });
 });
 

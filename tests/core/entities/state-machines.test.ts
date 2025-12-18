@@ -8,11 +8,9 @@ import { describe, test, expect } from "bun:test";
 
 // Agent state machine
 import {
-  agentStateMachine,
   canAgentTransition,
   getValidAgentTransitions,
   isAgentTerminal,
-  transitionAgent,
   safeTransitionAgent,
   startAgent,
   pauseAgent,
@@ -26,9 +24,7 @@ import {
 
 // Feature state machine
 import {
-  featureStateMachine,
   canFeatureTransition,
-  getValidFeatureTransitions,
   isFeatureTerminalState,
   transitionFeature,
   startDevelopment,
@@ -44,9 +40,7 @@ import {
 
 // Session state machine
 import {
-  sessionStateMachine,
   canSessionTransition,
-  getValidSessionTransitions,
   isSessionTerminalState,
   pauseSession,
   resumeSession,
@@ -58,9 +52,7 @@ import {
 
 // Worktree state machine
 import {
-  worktreeStateMachine,
   canWorktreeTransition,
-  getValidWorktreeTransitions,
   isWorktreeTerminalState,
   markWorktreeStale,
   removeActiveWorktree,
@@ -284,12 +276,13 @@ describe("Feature State Machine", () => {
   describe("Feature entity transitions", () => {
     const createTestFeature = (status: "planning" | "in_progress" | "review" | "testing" | "blocked" | "completed" | "cancelled" = "planning") => {
       return createFeature({
-        id: generateFeatureId(),
+        id: generateFeatureId() as string,
         name: "Test Feature",
-        workflowId: generateWorkflowId(),
-        sessionId: generateSessionId(),
-        currentStage: generateStageId(),
+        workflowId: generateWorkflowId() as string,
+        sessionId: generateSessionId() as string,
+        currentStage: generateStageId() as string,
         branchName: "feature/test",
+        priority: "normal",
         status,
       });
     };

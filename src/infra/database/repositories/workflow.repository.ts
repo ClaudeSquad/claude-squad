@@ -6,7 +6,7 @@
  */
 
 import type { DatabaseService } from "../connection.js";
-import { BaseRepository, DateColumn, JsonColumn, type QueryOptions } from "../repository.js";
+import { BaseRepository, DateColumn, JsonColumn } from "../repository.js";
 import type {
   Workflow,
   CreateWorkflow,
@@ -60,7 +60,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
    * Convert database row to Workflow entity
    */
   protected rowToEntity(row: Record<string, unknown>): Workflow {
-    const r = row as WorkflowRow;
+    const r = row as unknown as WorkflowRow;
     return {
       id: r.id,
       name: r.name,
@@ -168,7 +168,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
       `SELECT * FROM ${this.tableName} WHERE name = ?`,
       [name]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -178,7 +178,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
     const row = this.queryOne<WorkflowRow>(
       `SELECT * FROM ${this.tableName} WHERE is_default = 1 LIMIT 1`
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -189,7 +189,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
       `SELECT * FROM ${this.tableName} WHERE source = ? ORDER BY name ASC`,
       [source]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -199,7 +199,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
     const rows = this.query<WorkflowRow>(
       `SELECT * FROM ${this.tableName} WHERE is_builtin = 1 ORDER BY name ASC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -209,7 +209,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
     const rows = this.query<WorkflowRow>(
       `SELECT * FROM ${this.tableName} WHERE is_builtin = 0 ORDER BY name ASC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -222,7 +222,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
        ORDER BY name ASC`,
       [`%"${tag}"%`]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -236,7 +236,7 @@ export class WorkflowRepository extends BaseRepository<Workflow, CreateWorkflow,
        ORDER BY name ASC`,
       [searchTerm, searchTerm]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   // ==========================================================================

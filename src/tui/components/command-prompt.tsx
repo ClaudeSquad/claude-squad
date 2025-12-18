@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useKeyboard, useInput } from "@opentui/react";
+import { useKeyboard } from "@opentui/react";
 import { Autocomplete, useAutocomplete } from "./autocomplete.js";
 import type { Suggestion, AutocompleteResult } from "../../app/chat/types.js";
 
@@ -164,19 +164,23 @@ export function CommandPrompt({
     [enableAutocomplete, onAutocomplete, autocompleteDebounce, resetHistory]
   );
 
-  // Handle text input
-  useInput((input) => {
-    if (!focused) return;
-
-    // Regular character input
-    if (input && input.length === 1 && !input.match(/[\x00-\x1F]/)) {
-      handleInputChange(value + input);
-    }
-  });
+  // Handle text input via keyboard events
+  // Note: Character input is handled through the useKeyboard hook below
+  // by detecting printable characters
 
   // Handle keyboard events
   useKeyboard((key) => {
     if (!focused) return;
+
+    // Handle printable character input
+    if (key.sequence && key.sequence.length === 1 && !key.ctrl && !key.meta) {
+      const charCode = key.sequence.charCodeAt(0);
+      // Printable ASCII characters (space to tilde)
+      if (charCode >= 32 && charCode <= 126) {
+        handleInputChange(value + key.sequence);
+        return;
+      }
+    }
 
     // Submit on Enter (when autocomplete not showing or no selection)
     if (key.name === "return") {
@@ -351,7 +355,7 @@ export function CommandPrompt({
                 {value}
               </span>
               {focused && (
-                <span fg="white" backgroundColor="white">
+                <span fg="black" bg="white">
                   {" "}
                 </span>
               )}
@@ -383,15 +387,18 @@ export function SimpleTextInput({
   placeholder?: string;
   focused?: boolean;
 }) {
-  useInput((input) => {
-    if (!focused) return;
-    if (input && input.length === 1 && !input.match(/[\x00-\x1F]/)) {
-      onChange(value + input);
-    }
-  });
-
   useKeyboard((key) => {
     if (!focused) return;
+
+    // Handle printable character input
+    if (key.sequence && key.sequence.length === 1 && !key.ctrl && !key.meta) {
+      const charCode = key.sequence.charCodeAt(0);
+      // Printable ASCII characters (space to tilde)
+      if (charCode >= 32 && charCode <= 126) {
+        onChange(value + key.sequence);
+        return;
+      }
+    }
 
     if (key.name === "return" && onSubmit) {
       onSubmit(value);
@@ -411,7 +418,7 @@ export function SimpleTextInput({
           <span fg="gray">{placeholder}</span>
         )}
         {focused && (
-          <span fg="white" backgroundColor="white">
+          <span fg="black" bg="white">
             {" "}
           </span>
         )}

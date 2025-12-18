@@ -5,14 +5,13 @@
  * Uses mocked Git operations to avoid actual git commands.
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import {
   WorktreeManager,
   createWorktreeManager,
   type WorktreePoolConfig,
 } from "../../../src/infra/git/worktree-manager.js";
-import { rm, mkdir, access } from "node:fs/promises";
-import { join } from "node:path";
+import { rm, access } from "node:fs/promises";
 
 describe("WorktreeManager", () => {
   const testBaseDir = "/tmp/claude-squad-test-worktrees";

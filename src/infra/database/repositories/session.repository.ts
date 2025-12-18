@@ -85,7 +85,7 @@ export class SessionRepository extends BaseRepository<Session, CreateSession, Up
    * Convert database row to Session entity
    */
   protected rowToEntity(row: Record<string, unknown>): Session {
-    const r = row as SessionRow;
+    const r = row as unknown as SessionRow;
     return {
       id: r.id,
       name: r.name,
@@ -239,7 +239,7 @@ export class SessionRepository extends BaseRepository<Session, CreateSession, Up
       `SELECT * FROM ${this.tableName} WHERE status = ? ORDER BY last_active_at DESC`,
       ["active"]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -250,7 +250,7 @@ export class SessionRepository extends BaseRepository<Session, CreateSession, Up
       `SELECT * FROM ${this.tableName} WHERE project_path = ? ORDER BY last_active_at DESC`,
       [path]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -261,7 +261,7 @@ export class SessionRepository extends BaseRepository<Session, CreateSession, Up
       `SELECT * FROM ${this.tableName} WHERE status = ? ORDER BY last_active_at DESC`,
       [status]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -272,7 +272,7 @@ export class SessionRepository extends BaseRepository<Session, CreateSession, Up
       `SELECT * FROM ${this.tableName} WHERE feature_id = ? ORDER BY created_at DESC`,
       [featureId]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -566,7 +566,7 @@ export class SessionRepository extends BaseRepository<Session, CreateSession, Up
 
     const rows = this.query<SessionRow & { message_count: number }>(sql, params);
     return rows.map((row) => ({
-      ...this.rowToEntity(row as Record<string, unknown>),
+      ...this.rowToEntity(row as unknown as Record<string, unknown>),
       messageCount: row.message_count,
     }));
   }

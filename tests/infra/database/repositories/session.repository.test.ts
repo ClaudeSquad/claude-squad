@@ -9,6 +9,30 @@ import { SessionRepository } from "../../../../src/infra/database/repositories/s
 import { createTestDatabase, testId, type TestDatabaseContext } from "../test-helpers.js";
 import type { CreateSession } from "../../../../src/core/entities/session.js";
 
+/**
+ * Helper to create a CreateSession object with defaults.
+ */
+function createTestSessionData(overrides: {
+  id: string;
+  projectPath: string;
+  name: string;
+  config?: { model?: "sonnet" | "opus" | "haiku"; maxConcurrentAgents?: number };
+  status?: "active" | "paused" | "completed" | "archived" | "crashed";
+}): CreateSession {
+  return {
+    id: overrides.id,
+    name: overrides.name,
+    projectPath: overrides.projectPath,
+    status: overrides.status ?? "active",
+    agentCount: 0,
+    conversationHistory: [],
+    commandHistory: [],
+    totalCost: 0,
+    totalTokens: { input: 0, output: 0 },
+    config: overrides.config ?? {},
+  };
+}
+
 describe("SessionRepository", () => {
   let ctx: TestDatabaseContext;
   let repo: SessionRepository;
@@ -24,11 +48,11 @@ describe("SessionRepository", () => {
 
   describe("create", () => {
     it("should create a new session", async () => {
-      const data: CreateSession = {
+      const data = createTestSessionData({
         id: testId("ses"),
         projectPath: "/path/to/project",
         name: "Test Session",
-      };
+      });
 
       const session = await repo.create(data);
 
@@ -40,11 +64,11 @@ describe("SessionRepository", () => {
     });
 
     it("should set default values", async () => {
-      const data: CreateSession = {
+      const data = createTestSessionData({
         id: testId("ses"),
         projectPath: "/path/to/project",
         name: "Minimal Session",
-      };
+      });
 
       const session = await repo.create(data);
 
@@ -54,32 +78,32 @@ describe("SessionRepository", () => {
     });
 
     it("should store custom config", async () => {
-      const data: CreateSession = {
+      const data = createTestSessionData({
         id: testId("ses"),
         projectPath: "/path/to/project",
         name: "Configured Session",
         config: {
-          theme: "dark",
-          verbose: true,
+          model: "opus",
+          maxConcurrentAgents: 5,
         },
-      };
+      });
 
       const session = await repo.create(data);
 
       expect(session.config).toEqual({
-        theme: "dark",
-        verbose: true,
+        model: "opus",
+        maxConcurrentAgents: 5,
       });
     });
   });
 
   describe("findById", () => {
     it("should find existing session", async () => {
-      const created = await repo.create({
+      const created = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "FindById Test",
-      });
+      }));
 
       const found = await repo.findById(created.id);
 
@@ -96,11 +120,11 @@ describe("SessionRepository", () => {
 
   describe("findByIdWithHistory", () => {
     it("should include conversation history", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "History Test",
-      });
+      }));
 
       await repo.addMessage(session.id, {
         role: "user",
@@ -116,23 +140,23 @@ describe("SessionRepository", () => {
       const found = await repo.findByIdWithHistory(session.id);
 
       expect(found?.conversationHistory.length).toBe(2);
-      expect(found?.conversationHistory[0].role).toBe("user");
-      expect(found?.conversationHistory[0].content).toBe("Hello");
+      expect(found?.conversationHistory[0]!.role).toBe("user");
+      expect(found?.conversationHistory[0]!.content).toBe("Hello");
     });
   });
 
   describe("findActive", () => {
     it("should find active sessions", async () => {
-      await repo.create({
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Active 1",
-      });
-      await repo.create({
+      }));
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Active 2",
-      });
+      }));
 
       const active = await repo.findActive();
 
@@ -145,21 +169,21 @@ describe("SessionRepository", () => {
     it("should find sessions for a project", async () => {
       const projectPath = "/unique/project/path";
 
-      await repo.create({
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath,
         name: "Project Session 1",
-      });
-      await repo.create({
+      }));
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath,
         name: "Project Session 2",
-      });
-      await repo.create({
+      }));
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/different/path",
         name: "Different Project",
-      });
+      }));
 
       const sessions = await repo.findByProjectPath(projectPath);
 
@@ -170,11 +194,11 @@ describe("SessionRepository", () => {
 
   describe("update", () => {
     it("should update session name", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Original Name",
-      });
+      }));
 
       const updated = await repo.update(session.id, { name: "Updated Name" });
 
@@ -185,11 +209,11 @@ describe("SessionRepository", () => {
     });
 
     it("should update session status", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Status Test",
-      });
+      }));
 
       await repo.update(session.id, { status: "completed" });
 
@@ -200,11 +224,11 @@ describe("SessionRepository", () => {
 
   describe("updateLastActive", () => {
     it("should update lastActiveAt timestamp", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Activity Test",
-      });
+      }));
 
       const before = session.lastActiveAt;
 
@@ -220,11 +244,11 @@ describe("SessionRepository", () => {
 
   describe("conversation history", () => {
     it("should add messages", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Message Test",
-      });
+      }));
 
       await repo.addMessage(session.id, {
         role: "user",
@@ -234,15 +258,15 @@ describe("SessionRepository", () => {
 
       const history = await repo.getConversationHistory(session.id);
       expect(history.length).toBe(1);
-      expect(history[0].content).toBe("Question?");
+      expect(history[0]!.content).toBe("Question?");
     });
 
     it("should respect limit parameter", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Limit Test",
-      });
+      }));
 
       for (let i = 0; i < 10; i++) {
         await repo.addMessage(session.id, {
@@ -257,11 +281,11 @@ describe("SessionRepository", () => {
     });
 
     it("should store messages with all roles", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Roles Test",
-      });
+      }));
 
       await repo.addMessage(session.id, {
         role: "user",
@@ -287,11 +311,11 @@ describe("SessionRepository", () => {
 
   describe("command history", () => {
     it("should add commands", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Command Test",
-      });
+      }));
 
       await repo.addCommand(session.id, "/help");
       await repo.addCommand(session.id, "/status");
@@ -303,11 +327,11 @@ describe("SessionRepository", () => {
     });
 
     it("should respect limit on command history", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Command Limit Test",
-      });
+      }));
 
       for (let i = 0; i < 20; i++) {
         await repo.addCommand(session.id, `/cmd${i}`);
@@ -320,11 +344,11 @@ describe("SessionRepository", () => {
 
   describe("delete", () => {
     it("should delete session", async () => {
-      const session = await repo.create({
+      const session = await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Delete Test",
-      });
+      }));
 
       await repo.delete(session.id);
 
@@ -337,16 +361,16 @@ describe("SessionRepository", () => {
     it("should count sessions", async () => {
       const initialCount = await repo.count();
 
-      await repo.create({
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Count Test 1",
-      });
-      await repo.create({
+      }));
+      await repo.create(createTestSessionData({
         id: testId("ses"),
         projectPath: "/test/path",
         name: "Count Test 2",
-      });
+      }));
 
       const newCount = await repo.count();
       expect(newCount).toBe(initialCount + 2);

@@ -6,7 +6,7 @@
  */
 
 import type { DatabaseService } from "../connection.js";
-import { BaseRepository, DateColumn, JsonColumn, type QueryOptions } from "../repository.js";
+import { BaseRepository, DateColumn, JsonColumn } from "../repository.js";
 import type {
   Integration,
   CreateIntegration,
@@ -64,7 +64,7 @@ export class IntegrationRepository extends BaseRepository<
    * Convert database row to Integration entity
    */
   protected rowToEntity(row: Record<string, unknown>): Integration {
-    const r = row as IntegrationRow;
+    const r = row as unknown as IntegrationRow;
     return {
       id: r.id,
       name: r.name,
@@ -209,7 +209,7 @@ export class IntegrationRepository extends BaseRepository<
       `SELECT * FROM ${this.tableName} WHERE name = ?`,
       [name]
     );
-    return row ? this.rowToEntity(row as Record<string, unknown>) : null;
+    return row ? this.rowToEntity(row as unknown as Record<string, unknown>) : null;
   }
 
   /**
@@ -220,7 +220,7 @@ export class IntegrationRepository extends BaseRepository<
       `SELECT * FROM ${this.tableName} WHERE type = ? ORDER BY name ASC`,
       [type]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -231,7 +231,7 @@ export class IntegrationRepository extends BaseRepository<
       `SELECT * FROM ${this.tableName} WHERE status = ? ORDER BY name ASC`,
       [status]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -243,7 +243,7 @@ export class IntegrationRepository extends BaseRepository<
        WHERE status = 'healthy' AND enabled = 1
        ORDER BY name ASC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -255,7 +255,7 @@ export class IntegrationRepository extends BaseRepository<
        WHERE status = 'unhealthy'
        ORDER BY name ASC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -265,7 +265,7 @@ export class IntegrationRepository extends BaseRepository<
     const rows = this.query<IntegrationRow>(
       `SELECT * FROM ${this.tableName} WHERE enabled = 1 ORDER BY name ASC`
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -276,7 +276,7 @@ export class IntegrationRepository extends BaseRepository<
       `SELECT * FROM ${this.tableName} WHERE project_path = ? ORDER BY name ASC`,
       [projectPath]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   /**
@@ -292,7 +292,7 @@ export class IntegrationRepository extends BaseRepository<
        ORDER BY last_tested_at ASC`,
       [DateColumn.toStorage(staleDate)]
     );
-    return rows.map((row) => this.rowToEntity(row as Record<string, unknown>));
+    return rows.map((row) => this.rowToEntity(row as unknown as Record<string, unknown>));
   }
 
   // ==========================================================================

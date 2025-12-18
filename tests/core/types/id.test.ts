@@ -260,7 +260,7 @@ describe("Conversion Utilities", () => {
   test("toSessionId converts valid string", () => {
     const id = "ses_abc123xyz789";
     expect(() => toSessionId(id)).not.toThrow();
-    expect(toSessionId(id)).toBe(id);
+    expect(toSessionId(id) as string).toBe(id);
   });
 
   test("toSessionId throws for invalid string", () => {
@@ -271,7 +271,7 @@ describe("Conversion Utilities", () => {
   test("toAgentId converts valid string", () => {
     const id = "agt_abc123xyz789";
     expect(() => toAgentId(id)).not.toThrow();
-    expect(toAgentId(id)).toBe(id);
+    expect(toAgentId(id) as string).toBe(id);
   });
 
   test("toAgentId throws for invalid string", () => {
@@ -280,37 +280,37 @@ describe("Conversion Utilities", () => {
 
   test("toFeatureId converts valid string", () => {
     const id = "ftr_abc123xyz789";
-    expect(toFeatureId(id)).toBe(id);
+    expect(toFeatureId(id) as string).toBe(id);
   });
 
   test("toWorkflowId converts valid string", () => {
     const id = "wfl_abc123xyz789";
-    expect(toWorkflowId(id)).toBe(id);
+    expect(toWorkflowId(id) as string).toBe(id);
   });
 
   test("toSkillId converts valid string", () => {
     const id = "skl_abc123xyz789";
-    expect(toSkillId(id)).toBe(id);
+    expect(toSkillId(id) as string).toBe(id);
   });
 
   test("toWorktreeId converts valid string", () => {
     const id = "wkt_abc123xyz789";
-    expect(toWorktreeId(id)).toBe(id);
+    expect(toWorktreeId(id) as string).toBe(id);
   });
 
   test("toStageId converts valid string", () => {
     const id = "stg_abc123xyz789";
-    expect(toStageId(id)).toBe(id);
+    expect(toStageId(id) as string).toBe(id);
   });
 
   test("toHandoffId converts valid string", () => {
     const id = "hnd_abc123xyz789";
-    expect(toHandoffId(id)).toBe(id);
+    expect(toHandoffId(id) as string).toBe(id);
   });
 
   test("toIntegrationId converts valid string", () => {
     const id = "int_abc123xyz789";
-    expect(toIntegrationId(id)).toBe(id);
+    expect(toIntegrationId(id) as string).toBe(id);
   });
 });
 

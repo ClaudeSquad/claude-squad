@@ -278,7 +278,7 @@ export class WindowsCredentialManagerProvider implements KeychainProvider {
         }
       );
 
-      const exitCode = await proc.exited;
+      await proc.exited;
 
       // Exit code 0 = success, anything else we still treat as success
       // since the goal is to ensure the credential doesn't exist
@@ -373,19 +373,16 @@ export class WindowsCredentialManagerProvider implements KeychainProvider {
     const lines = output.split(/\r?\n/);
 
     let currentTarget: string | null = null;
-    let currentUser: string | null = null;
 
     for (const line of lines) {
       const targetMatch = line.match(/Target:\s*(.+)/i);
-      if (targetMatch) {
+      if (targetMatch && targetMatch[1]) {
         currentTarget = targetMatch[1].trim();
         continue;
       }
 
       const userMatch = line.match(/User:\s*(.+)/i);
-      if (userMatch) {
-        currentUser = userMatch[1].trim();
-
+      if (userMatch && userMatch[1]) {
         // Parse target as "service:account"
         if (currentTarget?.startsWith(`${servicePrefix}:`)) {
           const account = currentTarget.slice(servicePrefix.length + 1);
@@ -397,7 +394,6 @@ export class WindowsCredentialManagerProvider implements KeychainProvider {
         }
 
         currentTarget = null;
-        currentUser = null;
       }
     }
 
