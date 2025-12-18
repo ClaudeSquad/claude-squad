@@ -34,6 +34,8 @@ export interface AppState {
 export interface AppProps {
   /** External state */
   state?: AppState;
+  /** Initial screen parameters (passed to first screen) */
+  initialParams?: Record<string, unknown>;
   /** Callback when exit is requested */
   onExit?: () => void;
 }
@@ -97,6 +99,7 @@ function AppContent({ state = {}, onExit }: AppProps) {
  * createRoot(renderer).render(
  *   <App
  *     state={{ sessionName: "my-project" }}
+ *     initialParams={{ isInitialized: true, projectPath: "/my/project" }}
  *     onExit={() => console.log("Goodbye!")}
  *   />
  * );
@@ -104,7 +107,7 @@ function AppContent({ state = {}, onExit }: AppProps) {
  */
 export function App(props: AppProps) {
   return (
-    <RouterProvider initialScreen="dashboard">
+    <RouterProvider initialScreen="dashboard" initialParams={props.initialParams}>
       <AppContent {...props} />
     </RouterProvider>
   );

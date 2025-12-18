@@ -329,8 +329,8 @@ async function main(): Promise<void> {
       break;
 
     case null:
-      // No command - show help
-      showHelp();
+      // No command - launch interactive TUI/REPL
+      await handleStart(parsed);
       break;
 
     default:

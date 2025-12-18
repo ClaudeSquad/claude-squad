@@ -11,6 +11,8 @@
     "cli": "bun run src/cli/index.ts",
     "dev": "bun --watch run src/cli/index.ts",
     "build": "bun build src/cli/index.ts --outdir dist --target bun --minify",
+    "build:exe": "bun build src/cli/index.ts --compile --outfile bin/squad --minify",
+    "build:exe:all": "bun build src/cli/index.ts --compile --outfile bin/squad-darwin-arm64 --target=bun-darwin-arm64 --minify && bun build src/cli/index.ts --compile --outfile bin/squad-darwin-x64 --target=bun-darwin-x64 --minify && bun build src/cli/index.ts --compile --outfile bin/squad-linux-x64 --target=bun-linux-x64 --minify && bun build src/cli/index.ts --compile --outfile bin/squad-windows-x64.exe --target=bun-windows-x64 --minify",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "typecheck": "tsc --noEmit",
