@@ -238,6 +238,27 @@ export interface IntentClassifiedEvent {
 }
 
 /**
+ * Agent intervention events
+ */
+export interface AgentInterventionRequestedEvent {
+  type: "AGENT_INTERVENTION_REQUESTED";
+  agentId: string;
+  requestId: string;
+  interventionType: "question" | "approval" | "input" | "choice";
+  prompt: string;
+  options?: string[];
+  timestamp: number;
+}
+
+export interface AgentInterventionRespondedEvent {
+  type: "AGENT_INTERVENTION_RESPONDED";
+  agentId: string;
+  requestId: string;
+  response: string;
+  timestamp: number;
+}
+
+/**
  * System events
  */
 export interface SystemErrorEvent {
@@ -293,6 +314,9 @@ export type DomainEvent =
   | ChatInputEvent
   | ChatResponseEvent
   | IntentClassifiedEvent
+  // Agent intervention events
+  | AgentInterventionRequestedEvent
+  | AgentInterventionRespondedEvent
   // System events
   | SystemErrorEvent
   | SystemShutdownEvent;

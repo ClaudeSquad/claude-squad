@@ -12,6 +12,7 @@
  * - Maintain conversation context across interactions
  */
 
+import type { Subscription } from "rxjs";
 import type {
   ConversationContext,
   ChatResponse,
@@ -32,6 +33,18 @@ import { IntentClassifier, intentClassifier } from "./intent-classifier.js";
 import { AutocompleteEngine, createAutocompleteEngine } from "./autocomplete.js";
 import { isSlashCommand, isEmptyInput } from "./patterns.js";
 import { eventBus, EventBus } from "../../infra/events/event-bus.js";
+import {
+  AgentManager,
+  agentManager as globalAgentManager,
+} from "../../core/agent/manager.js";
+import {
+  InterventionHandler,
+  createInterventionHandler,
+  type InterventionEvent,
+} from "../../core/agent/intervention.js";
+import { AgentSpawner, createAgentSpawner } from "../../core/agent/spawner.js";
+import type { InterventionRequest, ManagedAgent } from "../../core/agent/types.js";
+import { createEvent } from "../../infra/events/index.js";
 
 // ============================================================================
 // Configuration
@@ -86,6 +99,15 @@ export class ChatHandler {
   private autocomplete: AutocompleteEngine;
   private events: EventBus;
 
+  // Agent system integration
+  private agentManager: AgentManager;
+  private interventionHandler: InterventionHandler;
+  private agentSpawner: AgentSpawner;
+  private interventionSubscription: Subscription | null = null;
+
+  // Pending intervention requests awaiting user response
+  private pendingInterventions: Map<string, InterventionRequest> = new Map();
+
   constructor(
     config: Partial<ChatHandlerConfig> = {},
     deps?: {
@@ -93,6 +115,9 @@ export class ChatHandler {
       classifier?: IntentClassifier;
       autocomplete?: AutocompleteEngine;
       events?: EventBus;
+      agentManager?: AgentManager;
+      interventionHandler?: InterventionHandler;
+      agentSpawner?: AgentSpawner;
     }
   ) {
     this.config = { ...defaultConfig, ...config };
@@ -105,6 +130,66 @@ export class ChatHandler {
     this.autocomplete =
       deps?.autocomplete ?? createAutocompleteEngine(this.router);
     this.events = deps?.events ?? eventBus;
+
+    // Agent system dependencies
+    this.agentManager = deps?.agentManager ?? globalAgentManager;
+    this.interventionHandler = deps?.interventionHandler ?? createInterventionHandler();
+    this.agentSpawner = deps?.agentSpawner ?? createAgentSpawner();
+
+    // Subscribe to intervention events
+    this.setupInterventionSubscription();
+  }
+
+  /**
+   * Set up subscription to intervention events from agents.
+   * @private
+   */
+  private setupInterventionSubscription(): void {
+    this.interventionSubscription = this.interventionHandler.intervention$.subscribe(
+      (event: InterventionEvent) => {
+        this.handleInterventionEvent(event);
+      }
+    );
+  }
+
+  /**
+   * Handle intervention events from agents.
+   * @private
+   */
+  private handleInterventionEvent(event: InterventionEvent): void {
+    const { agentId, request } = event;
+
+    if (request.status === "pending") {
+      // Store pending intervention
+      this.pendingInterventions.set(request.id, request);
+
+      // Emit event for UI notification
+      this.events.emit(
+        createEvent({
+          type: "AGENT_INTERVENTION_REQUESTED",
+          agentId,
+          requestId: request.id,
+          interventionType: request.type,
+          prompt: request.prompt,
+          options: request.options,
+        })
+      );
+    } else {
+      // Intervention was answered or timed out - remove from pending
+      this.pendingInterventions.delete(request.id);
+
+      if (request.status === "answered" && request.response) {
+        // Emit response event
+        this.events.emit(
+          createEvent({
+            type: "AGENT_INTERVENTION_RESPONDED",
+            agentId,
+            requestId: request.id,
+            response: request.response,
+          })
+        );
+      }
+    }
   }
 
   /**
@@ -288,6 +373,10 @@ export class ChatHandler {
 
   /**
    * Execute a message agent intent.
+   *
+   * Sends a message to a running agent. The message can be:
+   * 1. A response to a pending intervention request
+   * 2. Direct input to the agent's stdin
    */
   private async executeMessageAgentIntent(
     intent: UserIntent & { type: "message_agent" }
@@ -300,17 +389,137 @@ export class ChatHandler {
       );
     }
 
-    // TODO: Implement actual agent messaging when agent system is ready
-    // For now, acknowledge the intent
-    return {
-      content: `Message to ${intent.agentIdentifier}: "${intent.message}"\n\n(Agent messaging will be available once agents are spawned)`,
-      type: "agent",
-      success: true,
-      data: {
-        agentIdentifier: intent.agentIdentifier,
-        message: intent.message,
-      },
-    };
+    const { agentIdentifier, message } = intent;
+
+    // Find the target agent
+    const targetAgent = this.findAgentByIdentifier(agentIdentifier);
+
+    if (!targetAgent) {
+      // No agent found with that identifier
+      const runningAgents = this.agentManager.getRunningAgents();
+      if (runningAgents.length === 0) {
+        return createErrorResponse(
+          "No agents are currently running. Start a feature first.",
+          ["/feature", "/agents"]
+        );
+      }
+
+      const agentNames = runningAgents
+        .map((a) => a.agent.name || a.agent.id)
+        .join(", ");
+      return createErrorResponse(
+        `Agent "${agentIdentifier}" not found. Running agents: ${agentNames}`,
+        ["/agents"]
+      );
+    }
+
+    // Check if agent has a running process
+    if (!targetAgent.process) {
+      return createErrorResponse(
+        `Agent "${targetAgent.agent.name}" is not currently running.`,
+        ["/agents"]
+      );
+    }
+
+    // Check if there's a pending intervention for this agent
+    const pendingIntervention = this.findPendingInterventionForAgent(
+      targetAgent.agent.id as string
+    );
+
+    if (pendingIntervention) {
+      // Respond to the pending intervention
+      this.interventionHandler.respond(pendingIntervention.id, message);
+
+      // Remove from pending map
+      this.pendingInterventions.delete(pendingIntervention.id);
+
+      return {
+        content: `Responded to ${targetAgent.agent.name}'s ${pendingIntervention.type}: "${message}"`,
+        type: "agent",
+        success: true,
+        data: {
+          agentId: targetAgent.agent.id,
+          agentName: targetAgent.agent.name,
+          interventionId: pendingIntervention.id,
+          response: message,
+        },
+      };
+    }
+
+    // No pending intervention - try to send direct input via stdin
+    const processId = targetAgent.process.id;
+    const sent = this.agentSpawner.sendInput(processId, message);
+
+    if (sent) {
+      return {
+        content: `Message sent to ${targetAgent.agent.name}: "${message}"`,
+        type: "agent",
+        success: true,
+        data: {
+          agentId: targetAgent.agent.id,
+          agentName: targetAgent.agent.name,
+          message,
+        },
+      };
+    } else {
+      return createErrorResponse(
+        `Failed to send message to ${targetAgent.agent.name}. The agent may not accept input at this time.`,
+        ["/agents"]
+      );
+    }
+  }
+
+  /**
+   * Find an agent by identifier (name, ID, or index).
+   * @private
+   */
+  private findAgentByIdentifier(identifier: string): ManagedAgent | undefined {
+    const runningAgents = this.agentManager.getRunningAgents();
+
+    // Try to match by exact ID
+    const byId = runningAgents.find(
+      (a) => a.agent.id === identifier
+    );
+    if (byId) return byId;
+
+    // Try to match by name (case-insensitive)
+    const lowerIdentifier = identifier.toLowerCase();
+    const byName = runningAgents.find(
+      (a) => a.agent.name?.toLowerCase() === lowerIdentifier
+    );
+    if (byName) return byName;
+
+    // Try to match by partial name
+    const byPartialName = runningAgents.find(
+      (a) => a.agent.name?.toLowerCase().includes(lowerIdentifier)
+    );
+    if (byPartialName) return byPartialName;
+
+    // Try to match by numeric index (1-based for user friendliness)
+    const index = parseInt(identifier, 10);
+    if (!isNaN(index) && index >= 1 && index <= runningAgents.length) {
+      return runningAgents[index - 1];
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Find a pending intervention for a specific agent.
+   * @private
+   */
+  private findPendingInterventionForAgent(
+    agentId: string
+  ): InterventionRequest | undefined {
+    // Check if this agent has pending interventions via the handler
+    const typedAgentId = agentId as AgentId;
+    if (this.interventionHandler.hasPending(typedAgentId)) {
+      const pending = this.interventionHandler.getPending(typedAgentId);
+      if (pending.length > 0) {
+        return pending[0];
+      }
+    }
+    return undefined;
   }
 
   /**
@@ -521,6 +730,79 @@ export class ChatHandler {
   }
 
   // ============================================================================
+  // Agent System
+  // ============================================================================
+
+  /**
+   * Get all currently running agents.
+   *
+   * @returns Array of managed agents that have an active process
+   *
+   * @example
+   * ```typescript
+   * const running = handler.getRunningAgents();
+   * running.forEach(agent => {
+   *   console.log(`${agent.agent.name}: ${agent.process?.state}`);
+   * });
+   * ```
+   */
+  getRunningAgents(): ManagedAgent[] {
+    return this.agentManager.getRunningAgents();
+  }
+
+  /**
+   * Get all pending intervention requests.
+   *
+   * @returns Array of pending intervention requests awaiting user response
+   */
+  getPendingInterventions(): InterventionRequest[] {
+    return Array.from(this.pendingInterventions.values());
+  }
+
+  /**
+   * Respond to a pending intervention request.
+   *
+   * @param requestId - The ID of the intervention request
+   * @param response - The user's response
+   * @returns True if the response was sent successfully
+   */
+  respondToIntervention(requestId: string, response: string): boolean {
+    const intervention = this.pendingInterventions.get(requestId);
+    if (!intervention) {
+      return false;
+    }
+
+    this.interventionHandler.respond(requestId, response);
+    this.pendingInterventions.delete(requestId);
+    return true;
+  }
+
+  /**
+   * Check if there are any pending intervention requests.
+   */
+  hasPendingInterventions(): boolean {
+    return this.pendingInterventions.size > 0;
+  }
+
+  /**
+   * Get the agent manager for direct access.
+   *
+   * @returns The AgentManager instance
+   */
+  getAgentManager(): AgentManager {
+    return this.agentManager;
+  }
+
+  /**
+   * Get the agent spawner for direct access.
+   *
+   * @returns The AgentSpawner instance
+   */
+  getAgentSpawner(): AgentSpawner {
+    return this.agentSpawner;
+  }
+
+  // ============================================================================
   // Utilities
   // ============================================================================
 
@@ -536,6 +818,27 @@ export class ChatHandler {
    */
   getClassifier(): IntentClassifier {
     return this.classifier;
+  }
+
+  // ============================================================================
+  // Cleanup
+  // ============================================================================
+
+  /**
+   * Clean up resources when the handler is no longer needed.
+   *
+   * Unsubscribes from intervention events and cleans up pending state.
+   * Call this when shutting down or switching sessions.
+   */
+  dispose(): void {
+    // Unsubscribe from intervention events
+    if (this.interventionSubscription) {
+      this.interventionSubscription.unsubscribe();
+      this.interventionSubscription = null;
+    }
+
+    // Clear pending interventions
+    this.pendingInterventions.clear();
   }
 }
 
@@ -568,6 +871,9 @@ export function createChatHandler(
     classifier?: IntentClassifier;
     autocomplete?: AutocompleteEngine;
     events?: EventBus;
+    agentManager?: AgentManager;
+    interventionHandler?: InterventionHandler;
+    agentSpawner?: AgentSpawner;
   }
 ): ChatHandler {
   return new ChatHandler(config, deps);

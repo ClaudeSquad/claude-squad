@@ -5,6 +5,10 @@
  * Exports all components needed for the REPL experience.
  */
 
+// Ensure commands are registered when chat system is imported.
+// This side-effect import makes commands available for autocomplete and routing.
+import "../../core/commands/definitions.js";
+
 // Types
 export type {
   UIMode,

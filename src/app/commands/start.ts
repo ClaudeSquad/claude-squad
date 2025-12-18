@@ -12,6 +12,10 @@ import { loadConfig, isInitialized } from "../config/loader.js";
 import { App } from "../../tui/app.js";
 import { registerWelcomeScreen } from "../../tui/screens/welcome.js";
 
+// Import commands module to register all built-in commands before TUI starts.
+// This side-effect import ensures commands are available for autocomplete.
+import "../../core/commands/definitions.js";
+
 // ANSI colors for pre-TUI output
 const colors = {
   reset: "\x1b[0m",
