@@ -12,6 +12,32 @@ Claude Squad is a multi-agent orchestration system that transforms solo develope
 - Workflow-based task coordination with review gates
 - Role-specific agent personas with specialized skills
 
+## ⚠️ MANDATORY: Feature Implementation Requirement
+
+**ALWAYS use the `claude-squad-implementer` agent when implementing any feature in this codebase.**
+
+This is a STRICT requirement. Before writing any implementation code, you MUST spawn the `claude-squad-implementer` agent using the Task tool:
+
+```
+Task tool with subagent_type: "claude-squad-implementer"
+```
+
+This agent is a Principal Full-Stack TypeScript Engineer with deep expertise in:
+- Bun runtime and its APIs
+- OpenTUI React components for terminal UI
+- SQLite with repository patterns
+- RxJS reactive architectures
+- Multi-agent orchestration systems
+
+**When to use `claude-squad-implementer`:**
+- Adding new features or functionality
+- Implementing new TUI screens or components
+- Creating new database entities or repositories
+- Building agent spawning or workflow logic
+- Any code changes beyond trivial bug fixes
+
+**Do NOT skip this requirement.** The implementer agent has specialized knowledge of Claude Squad's patterns and will produce higher quality, more consistent code.
+
 ## Technology Stack
 
 - **Runtime**: Bun
