@@ -5,8 +5,9 @@
  * files and directories using Bun's native file system APIs.
  */
 
-import { mkdir, readdir, rm, stat, access } from "node:fs/promises";
+import { mkdir, readdir, rm, stat, access, watch, type FSWatcher } from "node:fs/promises";
 import { join, dirname, basename, extname, resolve, relative } from "node:path";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 /**
  * File information
@@ -54,6 +55,30 @@ export interface WriteOptions {
   mode?: number;
   /** Append instead of overwrite */
   append?: boolean;
+}
+
+/**
+ * File watch event
+ */
+export interface WatchEvent {
+  /** Event type (change or rename) */
+  type: "change" | "rename";
+  /** Filename that changed (relative to watched path) */
+  filename?: string;
+  /** Full path to the changed file */
+  path: string;
+}
+
+/**
+ * Options for file watching
+ */
+export interface WatchOptions {
+  /** Watch subdirectories recursively */
+  recursive?: boolean;
+  /** Filter by file extensions */
+  extensions?: string[];
+  /** Debounce events by milliseconds */
+  debounceMs?: number;
 }
 
 /**
@@ -399,6 +424,249 @@ export class FileSystemService {
   getExtension(path: string): string {
     return extname(path);
   }
+
+  // ==========================================================================
+  // YAML Operations
+  // ==========================================================================
+
+  /**
+   * Read a file as YAML
+   *
+   * @param path - File path
+   * @returns Parsed YAML object
+   */
+  async readYaml<T = unknown>(path: string): Promise<T> {
+    const content = await this.readText(path);
+    return parseYaml(content) as T;
+  }
+
+  /**
+   * Write YAML to a file
+   *
+   * @param path - File path
+   * @param data - Data to serialize as YAML
+   * @param options - Write options
+   */
+  async writeYaml(
+    path: string,
+    data: unknown,
+    options?: WriteOptions
+  ): Promise<void> {
+    const content = stringifyYaml(data, {
+      indent: 2,
+      lineWidth: 120,
+    });
+    await this.writeText(path, content, options);
+  }
+
+  /**
+   * Parse YAML frontmatter from a file (like skill markdown files)
+   *
+   * @param path - File path
+   * @returns Object with frontmatter and content
+   */
+  async readYamlFrontmatter<T = Record<string, unknown>>(
+    path: string
+  ): Promise<{ frontmatter: T; content: string }> {
+    const text = await this.readText(path);
+    return this.parseYamlFrontmatter<T>(text);
+  }
+
+  /**
+   * Parse YAML frontmatter from text
+   *
+   * @param text - Text with YAML frontmatter
+   * @returns Object with frontmatter and content
+   */
+  parseYamlFrontmatter<T = Record<string, unknown>>(
+    text: string
+  ): { frontmatter: T; content: string } {
+    const frontmatterRegex = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
+    const match = text.match(frontmatterRegex);
+
+    if (!match) {
+      return {
+        frontmatter: {} as T,
+        content: text,
+      };
+    }
+
+    const frontmatter = parseYaml(match[1]) as T;
+    const content = match[2]?.trim() ?? "";
+
+    return { frontmatter, content };
+  }
+
+  /**
+   * Write a file with YAML frontmatter
+   *
+   * @param path - File path
+   * @param frontmatter - Frontmatter object
+   * @param content - Content after frontmatter
+   * @param options - Write options
+   */
+  async writeYamlFrontmatter(
+    path: string,
+    frontmatter: Record<string, unknown>,
+    content: string,
+    options?: WriteOptions
+  ): Promise<void> {
+    const yamlContent = stringifyYaml(frontmatter, { indent: 2 });
+    const fullContent = `---\n${yamlContent}---\n\n${content}`;
+    await this.writeText(path, fullContent, options);
+  }
+
+  // ==========================================================================
+  // File Watching
+  // ==========================================================================
+
+  /**
+   * Watch a file or directory for changes
+   *
+   * Uses Bun's native file watching for optimal performance.
+   *
+   * @param path - Path to watch (file or directory)
+   * @param callback - Callback when changes occur
+   * @param options - Watch options
+   * @returns AbortController to stop watching
+   *
+   * @example
+   * ```typescript
+   * const controller = await fs.watch('./config', (event) => {
+   *   console.log(`${event.type} on ${event.path}`);
+   * });
+   *
+   * // Later, stop watching
+   * controller.abort();
+   * ```
+   */
+  async watchPath(
+    path: string,
+    callback: (event: WatchEvent) => void,
+    options?: WatchOptions
+  ): Promise<AbortController> {
+    const controller = new AbortController();
+
+    const watcher = watch(path, {
+      recursive: options?.recursive ?? true,
+      signal: controller.signal,
+    });
+
+    // Process events asynchronously
+    (async () => {
+      try {
+        for await (const event of watcher) {
+          // Handle debouncing
+          if (options?.debounceMs) {
+            // Simple debounce by checking last event time
+            const now = Date.now();
+            if (
+              this.lastWatchEvent &&
+              now - this.lastWatchEvent < options.debounceMs
+            ) {
+              continue;
+            }
+            this.lastWatchEvent = now;
+          }
+
+          // Filter by extension if specified
+          if (options?.extensions && event.filename) {
+            const ext = extname(event.filename);
+            if (!options.extensions.includes(ext)) {
+              continue;
+            }
+          }
+
+          const watchEvent: WatchEvent = {
+            type: event.eventType as "rename" | "change",
+            filename: event.filename ?? undefined,
+            path: event.filename ? join(path, event.filename) : path,
+          };
+
+          callback(watchEvent);
+        }
+      } catch (error) {
+        // AbortError is expected when controller.abort() is called
+        if ((error as Error).name !== "AbortError") {
+          console.error("Watch error:", error);
+        }
+      }
+    })();
+
+    return controller;
+  }
+
+  /**
+   * Watch multiple paths for changes
+   *
+   * @param paths - Array of paths to watch
+   * @param callback - Callback when changes occur
+   * @param options - Watch options
+   * @returns AbortController to stop all watchers
+   */
+  async watchPaths(
+    paths: string[],
+    callback: (event: WatchEvent) => void,
+    options?: WatchOptions
+  ): Promise<AbortController> {
+    const mainController = new AbortController();
+    const controllers: AbortController[] = [];
+
+    for (const path of paths) {
+      const controller = await this.watchPath(path, callback, options);
+      controllers.push(controller);
+    }
+
+    // When main controller aborts, abort all sub-controllers
+    mainController.signal.addEventListener("abort", () => {
+      for (const controller of controllers) {
+        controller.abort();
+      }
+    });
+
+    return mainController;
+  }
+
+  /**
+   * Watch for YAML file changes in a directory
+   *
+   * Convenience method for watching skill/workflow/agent YAML files.
+   *
+   * @param dir - Directory to watch
+   * @param callback - Callback when YAML files change
+   * @returns AbortController to stop watching
+   */
+  async watchYamlFiles(
+    dir: string,
+    callback: (event: WatchEvent) => void
+  ): Promise<AbortController> {
+    return this.watchPath(dir, callback, {
+      recursive: true,
+      extensions: [".yaml", ".yml"],
+      debounceMs: 100,
+    });
+  }
+
+  /**
+   * Watch for Markdown files (skills) in a directory
+   *
+   * @param dir - Directory to watch
+   * @param callback - Callback when MD files change
+   * @returns AbortController to stop watching
+   */
+  async watchMarkdownFiles(
+    dir: string,
+    callback: (event: WatchEvent) => void
+  ): Promise<AbortController> {
+    return this.watchPath(dir, callback, {
+      recursive: true,
+      extensions: [".md"],
+      debounceMs: 100,
+    });
+  }
+
+  // Track last watch event for debouncing
+  private lastWatchEvent?: number;
 
   /**
    * Simple pattern matching (supports * wildcard)
