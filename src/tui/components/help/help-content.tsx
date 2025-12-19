@@ -26,8 +26,6 @@ export interface HelpContentProps {
   maxHeight?: number;
   /** Width of the content panel */
   width?: number;
-  /** Callback when user wants to go back */
-  onBack?: () => void;
 }
 
 /**
@@ -299,7 +297,6 @@ function ContentLine({ line, width }: ContentLineProps) {
  *   focused={!isTreeFocused}
  *   width={50}
  *   maxHeight={20}
- *   onBack={() => setSelectedTopic(null)}
  * />
  * ```
  */
@@ -308,7 +305,6 @@ export function HelpContent({
   focused = false,
   maxHeight = 20,
   width = 50,
-  onBack,
 }: HelpContentProps) {
   // Scroll position
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -359,7 +355,7 @@ export function HelpContent({
     setScrollOffset(maxScroll);
   }, [formattedLines.length, visibleHeight]);
 
-  // Handle keyboard input
+  // Handle keyboard input for scrolling
   useKeyboard(
     (key) => {
       if (!focused) return;
@@ -376,11 +372,9 @@ export function HelpContent({
         scrollToTop();
       } else if (key.name === "end" || (key.name === "g" && key.shift)) {
         scrollToBottom();
-      } else if (key.name === "escape" && onBack) {
-        onBack();
       }
     },
-    [focused, scrollUp, scrollDown, scrollPageUp, scrollPageDown, scrollToTop, scrollToBottom, onBack]
+    [focused, scrollUp, scrollDown, scrollPageUp, scrollPageDown, scrollToTop, scrollToBottom]
   );
 
   // Get visible lines

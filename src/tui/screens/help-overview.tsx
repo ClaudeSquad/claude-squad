@@ -8,9 +8,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { registerScreen, useRouter } from "../router.js";
-import { HelpTree, HelpContent, HELP_TOPICS, findTopicById } from "../components/help/index.js";
+import { HelpTree, HelpContent, HELP_TOPICS } from "../components/help/index.js";
 import type { HelpTopic } from "../components/help/index.js";
-import { BORDER_COLORS, TEXT_COLORS, PRIMARY_COLORS } from "../theme/index.js";
+import { BORDER_COLORS } from "../theme/index.js";
 
 // ============================================================================
 // Types
@@ -83,16 +83,12 @@ function HelpHeader({
  */
 function HelpFooter({
   isTreeFocused,
-  canGoBack,
 }: {
   isTreeFocused: boolean;
-  canGoBack: boolean;
 }) {
   return (
     <box
       height={FOOTER_HEIGHT}
-      borderTop
-      borderColor="gray"
       flexDirection="row"
       justifyContent="space-between"
       paddingLeft={1}
@@ -100,17 +96,16 @@ function HelpFooter({
     >
       <text>
         <span fg="gray">
-          Tab: Switch panel | {"\u2191\u2193"}: Navigate | Enter: Select |{" "}
-          {canGoBack ? "Esc: Back | " : ""}q: Close
+          {"\u2191\u2193"}/jk: Navigate | Tab: Switch panel | q/Esc: Close
         </span>
       </text>
       <text>
         <span fg={isTreeFocused ? "cyan" : "gray"}>
-          {isTreeFocused ? "[Tree]" : "Tree"}
+          {isTreeFocused ? "[Commands]" : "Commands"}
         </span>
         <span fg="gray"> | </span>
         <span fg={!isTreeFocused ? "cyan" : "gray"}>
-          {!isTreeFocused ? "[Content]" : "Content"}
+          {!isTreeFocused ? "[Details]" : "Details"}
         </span>
       </text>
     </box>
@@ -193,36 +188,19 @@ export function HelpOverviewScreen({ params }: HelpOverviewScreenProps) {
   const availableHeight = terminalHeight - HEADER_HEIGHT - FOOTER_HEIGHT - 2;
   const panelHeight = Math.max(10, availableHeight);
 
-  // Handle topic selection
+  // Handle topic selection (called immediately on navigation)
   const handleSelectTopic = useCallback((topic: HelpTopic) => {
     setSelectedTopic(topic);
     setSelectedId(topic.id);
 
-    // Build breadcrumb
-    const path = getTopicPath(HELP_TOPICS, topic.id);
-    if (path) {
-      setBreadcrumb(["Help", ...path]);
-    } else {
-      setBreadcrumb(["Help", topic.label]);
-    }
-
-    // Switch focus to content if topic has content
-    if (topic.content || topic.description) {
-      setIsTreeFocused(false);
-    }
+    // Simple breadcrumb for flat list
+    setBreadcrumb(["Help", topic.label]);
   }, []);
 
-  // Handle back navigation
-  const handleBack = useCallback(() => {
-    if (breadcrumb.length > 1) {
-      setBreadcrumb((prev) => prev.slice(0, -1));
-      setSelectedTopic(null);
-      setSelectedId(null);
-      setIsTreeFocused(true);
-    } else {
-      router.goBack();
-    }
-  }, [breadcrumb.length, router]);
+  // Handle close/back navigation
+  const handleClose = useCallback(() => {
+    router.goBack();
+  }, [router]);
 
   // Toggle focus between panels
   const toggleFocus = useCallback(() => {
@@ -238,36 +216,14 @@ export function HelpOverviewScreen({ params }: HelpOverviewScreenProps) {
         return;
       }
 
-      // Escape to go back or close
-      if (key.name === "escape") {
-        if (breadcrumb.length > 1) {
-          handleBack();
-        } else {
-          router.goBack();
-        }
-        return;
-      }
-
-      // Q to close help
-      if (key.name === "q" && !key.ctrl) {
-        router.goBack();
-        return;
-      }
-
-      // ? to show shortcuts (could navigate to shortcuts topic)
-      if (key.name === "?" || (key.shift && key.name === "/")) {
-        const shortcutsTopic = findTopicById(HELP_TOPICS, "shortcuts");
-        if (shortcutsTopic) {
-          handleSelectTopic(shortcutsTopic);
-        }
+      // Escape or Q to close help
+      if (key.name === "escape" || (key.name === "q" && !key.ctrl)) {
+        handleClose();
         return;
       }
     },
-    [toggleFocus, handleBack, router, handleSelectTopic]
+    [toggleFocus, handleClose]
   );
-
-  // Check if we can go back
-  const canGoBack = breadcrumb.length > 1;
 
   return (
     <box flexDirection="column" flexGrow={1}>
@@ -295,39 +251,14 @@ export function HelpOverviewScreen({ params }: HelpOverviewScreenProps) {
             focused={!isTreeFocused}
             maxHeight={panelHeight}
             width={contentWidth}
-            onBack={handleBack}
           />
         </box>
       </box>
 
       {/* Footer */}
-      <HelpFooter isTreeFocused={isTreeFocused} canGoBack={canGoBack} />
+      <HelpFooter isTreeFocused={isTreeFocused} />
     </box>
   );
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Get the path (labels) to a topic for breadcrumb.
- */
-function getTopicPath(
-  topics: HelpTopic[],
-  id: string,
-  path: string[] = []
-): string[] | null {
-  for (const topic of topics) {
-    if (topic.id === id) {
-      return [...path, topic.label];
-    }
-    if (topic.children) {
-      const found = getTopicPath(topic.children, id, [...path, topic.label]);
-      if (found) return found;
-    }
-  }
-  return null;
 }
 
 // ============================================================================
