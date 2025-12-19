@@ -5,3 +5,5 @@
  */
 
 export * from "./welcome.js";
+export * from "./help-overview.js";
+export * from "./help-commands.js";

@@ -871,7 +871,10 @@ const helpCommand: CommandDefinition = {
   name: "help",
   aliases: ["h", "?"],
   description: "Show help information",
-  longDescription: "Display help for all commands or a specific command.",
+  longDescription: `Display interactive help system or help for a specific command.
+
+Without arguments, opens the interactive help browser.
+With a command name, shows detailed help for that command.`,
   category: "info",
   arguments: [
     {
@@ -916,9 +919,11 @@ const helpCommand: CommandDefinition = {
       return success(helpText, { action: "show_help", command: commandName });
     }
 
-    // Show all commands
-    const helpText = commandRouter.generateHelpText();
-    return success(helpText, { action: "show_help" });
+    // No command specified - navigate to interactive help screen
+    return success("Opening help...", {
+      action: "navigate",
+      screen: "help",
+    });
   },
 };
 

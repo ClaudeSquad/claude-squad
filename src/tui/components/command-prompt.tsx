@@ -205,10 +205,20 @@ export function CommandPrompt({
         // Apply autocomplete selection
         const selected = suggestions[autocomplete.selectedIndex];
         if (selected) {
-          setValue(selected.text);
-          setCursorPosition(selected.text.length);
-          setShowAutocomplete(false);
-          setSuggestions([]);
+          // If the selected text is the same as current input, submit instead of just applying
+          if (selected.text === value.trim()) {
+            onSubmit(value);
+            setValue("");
+            setCursorPosition(0);
+            resetHistory();
+            setShowAutocomplete(false);
+            setSuggestions([]);
+          } else {
+            setValue(selected.text);
+            setCursorPosition(selected.text.length);
+            setShowAutocomplete(false);
+            setSuggestions([]);
+          }
         }
       } else if (value.trim()) {
         // Submit the input

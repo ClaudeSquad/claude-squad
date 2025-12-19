@@ -84,6 +84,8 @@ function AppContent({ state = {}, onExit }: AppProps) {
             if (action.type === "navigate" && action.payload) {
               const payload = action.payload as { screen: string };
               router.navigate(payload.screen as any);
+              // Clear the response after navigation so it doesn't persist
+              setLastResponse(null);
             }
           }
         }

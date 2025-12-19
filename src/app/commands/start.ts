@@ -11,6 +11,7 @@ import { createElement } from "react";
 import { loadConfig, isInitialized } from "../config/loader.js";
 import { App } from "../../tui/app.js";
 import { registerWelcomeScreen } from "../../tui/screens/welcome.js";
+import { registerHelpOverviewScreen } from "../../tui/screens/help-overview.js";
 
 // Import commands module to register all built-in commands before TUI starts.
 // This side-effect import ensures commands are available for autocomplete.
@@ -32,6 +33,7 @@ const colors = {
 export async function startCommand(): Promise<void> {
   // Register screens before rendering
   registerWelcomeScreen();
+  registerHelpOverviewScreen();
 
   // Check initialization status
   const initialized = await isInitialized();

@@ -17,6 +17,7 @@ import type {
   ConversationContext,
   ChatResponse,
   ChatMessage,
+  ChatAction,
   UserIntent,
   UIMode,
   AutocompleteResult,
@@ -581,6 +582,17 @@ export class ChatHandler {
     result: CommandResult,
     intent?: UserIntent
   ): ChatResponse {
+    // Build actions from result data if present
+    const actions: ChatAction[] = [];
+    const data = result.data as { action?: string; screen?: string } | undefined;
+
+    if (data?.action === "navigate" && data.screen) {
+      actions.push({
+        type: "navigate",
+        payload: { screen: data.screen },
+      });
+    }
+
     return {
       content: result.success
         ? result.message || "Command executed successfully"
@@ -589,6 +601,7 @@ export class ChatHandler {
       success: result.success,
       suggestions: result.suggestions,
       data: intent || result.data,
+      ...(actions.length > 0 && { actions }),
     };
   }
 
