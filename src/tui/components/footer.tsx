@@ -4,6 +4,8 @@
  * Displays keyboard shortcuts and status information.
  */
 
+import { STATUS_COLORS, type StatusType } from "../theme/index.js";
+
 /**
  * Shortcut definition
  */
@@ -23,7 +25,7 @@ export interface FooterProps {
   /** Status message */
   status?: string;
   /** Status type for coloring */
-  statusType?: "info" | "success" | "warning" | "error";
+  statusType?: StatusType;
   /** Total cost for the session */
   cost?: number;
 }
@@ -37,16 +39,6 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
   { key: "/", action: "Command" },
   { key: "?", action: "Help" },
 ];
-
-/**
- * Status type colors
- */
-const STATUS_COLORS: Record<NonNullable<FooterProps["statusType"]>, string> = {
-  info: "cyan",
-  success: "green",
-  warning: "yellow",
-  error: "red",
-};
 
 /**
  * Footer Component
