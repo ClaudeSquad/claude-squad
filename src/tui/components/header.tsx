@@ -2,12 +2,15 @@
  * Header Component
  *
  * Displays the application header with title and session info.
+ * Styled to match the design: dark background, "SQUAD — project" on left, "[?] Help" on right.
  */
 
 /**
  * Header props
  */
 export interface HeaderProps {
+  /** Project name to display */
+  projectName?: string;
   /** Session name or status to display */
   sessionName?: string;
   /** Current feature being worked on */
@@ -19,65 +22,52 @@ export interface HeaderProps {
 /**
  * Header Component
  *
- * Displays Claude Squad branding and current session context.
+ * Displays Claude Squad branding and current project/session context.
  *
  * @example
  * ```tsx
- * <Header sessionName="my-project" featureName="Add login" />
+ * <Header projectName="my-awesome-app" />
  * ```
  */
-export function Header({ sessionName, featureName, debug }: HeaderProps) {
+export function Header({ projectName, sessionName, featureName, debug }: HeaderProps) {
+  // Get project name from path if provided
+  const displayName = projectName || sessionName || "project";
+
   return (
     <box
       flexDirection="row"
       justifyContent="space-between"
-      paddingLeft={1}
-      paddingRight={1}
+      paddingLeft={2}
+      paddingRight={2}
       height={1}
-      backgroundColor="blue"
     >
-      {/* Left: Title */}
+      {/* Left: SQUAD — project-name */}
       <box flexDirection="row" gap={1}>
         <text>
-          <span fg="white">
-            ⚡ Claude Squad
-          </span>
+          <span fg="white" bold>SQUAD</span>
+          <span fg="gray"> — </span>
+          <span fg="green">{displayName}</span>
         </text>
         {debug && (
           <text>
-            <span fg="yellow">[DEBUG]</span>
+            <span fg="yellow"> [DEBUG]</span>
+          </text>
+        )}
+        {featureName && (
+          <text>
+            <span fg="gray"> / </span>
+            <span fg="cyan">{featureName}</span>
           </text>
         )}
       </box>
 
-      {/* Center: Feature name */}
-      {featureName && (
-        <box>
-          <text>
-            <span fg="gray">
-              Feature:
-            </span>{" "}
-            <span fg="cyan">{featureName}</span>
-          </text>
-        </box>
-      )}
-
-      {/* Right: Session info */}
+      {/* Right: [?] Help */}
       <box>
-        {sessionName ? (
-          <text>
-            <span fg="gray">
-              Session:
-            </span>{" "}
-            <span fg="green">{sessionName}</span>
-          </text>
-        ) : (
-          <text>
-            <span fg="gray">
-              No active session
-            </span>
-          </text>
-        )}
+        <text>
+          <span fg="gray">[</span>
+          <span fg="cyan">?</span>
+          <span fg="gray">] Help</span>
+        </text>
       </box>
     </box>
   );

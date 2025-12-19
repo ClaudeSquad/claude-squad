@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useKeyboard } from "@opentui/react";
+import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { Autocomplete, useAutocomplete } from "./autocomplete.js";
 import type { Suggestion, AutocompleteResult } from "../../app/chat/types.js";
 
@@ -120,10 +120,27 @@ export function CommandPrompt({
   const [value, setValue] = useState("");
   const [cursorPosition, setCursorPosition] = useState(0);
 
+  // Blinking cursor state
+  const [cursorVisible, setCursorVisible] = useState(true);
+
   // Autocomplete state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Blinking cursor effect
+  useEffect(() => {
+    if (!focused) {
+      setCursorVisible(false);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCursorVisible((v) => !v);
+    }, 530);
+
+    return () => clearInterval(interval);
+  }, [focused]);
 
   // History navigation
   const { navigateUp, navigateDown, reset: resetHistory } = useCommandHistory(history);
@@ -316,7 +333,14 @@ export function CommandPrompt({
     };
   }, []);
 
-  const showPlaceholder = !value && !focused;
+  // Get terminal dimensions for responsive border width
+  const { width: terminalWidth } = useTerminalDimensions();
+
+  // Generate horizontal border line (full width minus padding)
+  const borderWidth = Math.max(10, (terminalWidth || 80) - 4);
+  const horizontalLine = "─".repeat(borderWidth);
+
+  const showPlaceholder = !value;
 
   return (
     <box flexDirection="column">
@@ -336,33 +360,42 @@ export function CommandPrompt({
         />
       )}
 
-      {/* Input line */}
-      <box flexDirection="row" gap={1}>
+      {/* Top border line */}
+      <text>
+        <span fg="#3a3a4a">{horizontalLine}</span>
+      </text>
+
+      {/* Input row */}
+      <box flexDirection="row" paddingLeft={2}>
         {/* Prompt */}
         <text>
-          <span fg="green">{prompt}</span>
+          <span fg="white">{prompt} </span>
         </text>
 
+        {/* Cursor when empty */}
+        {showPlaceholder && focused && cursorVisible && (
+          <text>
+            <span fg="cyan">█</span>
+          </text>
+        )}
+
         {/* Input area */}
-        <box flexGrow={1}>
-          {showPlaceholder ? (
-            <text>
-              <span fg="gray">{placeholder}</span>
-            </text>
-          ) : (
-            <text>
-              <span fg={value.startsWith("/") ? "yellow" : "white"}>
-                {value}
-              </span>
-              {focused && (
-                <span fg="black" bg="white">
-                  {" "}
-                </span>
-              )}
-            </text>
-          )}
-        </box>
+        {!showPlaceholder && (
+          <text>
+            <span fg={value.startsWith("/") ? "yellow" : "white"}>
+              {value}
+            </span>
+            {focused && cursorVisible && (
+              <span fg="cyan">█</span>
+            )}
+          </text>
+        )}
       </box>
+
+      {/* Bottom border line */}
+      <text>
+        <span fg="#3a3a4a">{horizontalLine}</span>
+      </text>
     </box>
   );
 }
@@ -418,9 +451,7 @@ export function SimpleTextInput({
           <span fg="gray">{placeholder}</span>
         )}
         {focused && (
-          <span fg="black" bg="white">
-            {" "}
-          </span>
+          <span fg="cyan">█</span>
         )}
       </text>
     </box>

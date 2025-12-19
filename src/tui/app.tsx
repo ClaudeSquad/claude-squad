@@ -18,6 +18,8 @@ import type { ChatResponse, AutocompleteResult } from "../app/chat/types.js";
  * Application state from external sources
  */
 export interface AppState {
+  /** Project name (folder name) */
+  projectName?: string;
   /** Current session name */
   sessionName?: string;
   /** Current feature name */
@@ -30,6 +32,8 @@ export interface AppState {
   statusType?: "info" | "success" | "warning" | "error";
   /** Debug mode */
   debug?: boolean;
+  /** Whether to show minimal UI (welcome screen mode) */
+  minimal?: boolean;
 }
 
 /**
@@ -53,6 +57,9 @@ function AppContent({ state = {}, onExit }: AppProps) {
   // Chat handler for processing commands
   const chatHandler = getChatHandler();
   const router = useRouter();
+
+  // Check if we're on the welcome/dashboard screen (hide chrome)
+  const isWelcomeScreen = router.currentScreen === "dashboard";
 
   // Command history for navigation
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -117,6 +124,7 @@ function AppContent({ state = {}, onExit }: AppProps) {
     <box flexDirection="column" height="100%">
       {/* Header */}
       <Header
+        projectName={state.projectName}
         sessionName={state.sessionName}
         featureName={state.featureName}
         debug={state.debug}
@@ -146,11 +154,11 @@ function AppContent({ state = {}, onExit }: AppProps) {
         )}
       </box>
 
-      {/* Command Prompt */}
-      <box paddingLeft={1} paddingRight={1}>
+      {/* Command Prompt - full width input box */}
+      <box paddingTop={1} paddingLeft={2} paddingRight={2} paddingBottom={1}>
         <CommandPrompt
-          prompt="> "
-          placeholder="Type a command or message..."
+          prompt="❯"
+          placeholder="Type a command or describe what you want to build..."
           history={commandHistory}
           onSubmit={handleSubmit}
           onAutocomplete={handleAutocomplete}
@@ -159,12 +167,15 @@ function AppContent({ state = {}, onExit }: AppProps) {
         />
       </box>
 
-      {/* Footer */}
-      <Footer
-        status={state.status}
-        statusType={state.statusType}
-        cost={state.cost}
-      />
+      {/* Footer - hidden on welcome screen */}
+      {!isWelcomeScreen && (
+        <Footer
+          status={state.status}
+          statusType={state.statusType}
+          cost={state.cost}
+          minimal={state.minimal}
+        />
+      )}
     </box>
   );
 }

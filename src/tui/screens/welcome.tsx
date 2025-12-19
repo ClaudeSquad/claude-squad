@@ -2,46 +2,49 @@
  * Welcome Screen
  *
  * Entry point screen displayed when launching Claude Squad.
- * Shows ASCII logo, initialization status, and available commands.
+ * Styled to match the design: centered logo, tagline pill, command card.
  */
 
+import { useTerminalDimensions } from "@opentui/react";
 import { registerScreen } from "../router.js";
 
 // ============================================================================
-// ASCII Logo
+// ASCII Logo - Smaller, cleaner style to match design
 // ============================================================================
 
 /**
- * Claude Squad ASCII art logo (block-letter style from ui.md).
- * Two-line logo: CLAUDE on top, SQUAD below.
+ * Claude Squad ASCII art logo - pixelated block style.
+ * Designed to render in white/light color on dark background.
  */
 const LOGO = `
-  ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗
- ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝
- ██║     ██║     ███████║██║   ██║██║  ██║█████╗
- ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝
- ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗
-  ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
-
-        ███████╗ ██████╗ ██╗   ██╗ █████╗ ██████╗
-        ██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔══██╗
-        ███████╗██║   ██║██║   ██║███████║██║  ██║
-        ╚════██║██║▄▄ ██║██║   ██║██╔══██║██║  ██║
-        ███████║╚██████╔╝╚██████╔╝██║  ██║██████╔╝
-        ╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝
-
-             Multi-Agent Workflows
-`;
+ ██████╗ ██╗      █████╗ ██╗   ██╗██████╗  ███████╗
+██╔════╝ ██║     ██╔══██╗██║   ██║██╔══██╗ ██╔════╝
+██║      ██║     ███████║██║   ██║██║  ██║ █████╗
+██║      ██║     ██╔══██║██║   ██║██║  ██║ ██╔══╝
+╚██████╗ ███████╗██║  ██║╚██████╔╝██████╔╝ ███████╗
+ ╚═════╝ ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝  ╚══════╝
+      ███████╗ ██████╗ ██╗   ██╗ █████╗ ██████╗
+      ██╔════╝██╔═══██╗██║   ██║██╔══██╗██╔══██╗
+      ███████╗██║   ██║██║   ██║███████║██║  ██║
+      ╚════██║██║▄▄ ██║██║   ██║██╔══██║██║  ██║
+      ███████║╚██████╔╝╚██████╔╝██║  ██║██████╔╝
+      ╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝    `;
 
 /**
- * Compact logo for smaller terminals.
+ * Compact logo for smaller terminals (< 60 cols).
  */
 const COMPACT_LOGO = `
-  ╔═══════════════════════════════════════╗
-  ║         CLAUDE SQUAD                  ║
-  ║       Multi-Agent Workflows           ║
-  ╚═══════════════════════════════════════╝
-`;
+╔═══════════════════════════════════════╗
+║           CLAUDE SQUAD                ║
+╚═══════════════════════════════════════╝`;
+
+/**
+ * Very compact logo for tiny terminals (< 45 cols).
+ */
+const TINY_LOGO = `
+┌───────────────────┐
+│   CLAUDE SQUAD    │
+└───────────────────┘`;
 
 // ============================================================================
 // Welcome Screen Props
@@ -55,17 +58,12 @@ export interface WelcomeScreenProps {
   isInitialized?: boolean;
   /** Project path */
   projectPath?: string;
-  /** Recent sessions for quick resume */
-  recentSessions?: Array<{
-    id: string;
-    name: string;
-    lastActive: Date;
-    status: string;
-  }>;
+  /** Project name (derived from path if not provided) */
+  projectName?: string;
   /** Terminal width for responsive layout */
   terminalWidth?: number;
-  /** Version string */
-  version?: string;
+  /** Terminal height for responsive layout */
+  terminalHeight?: number;
 }
 
 // ============================================================================
@@ -73,119 +71,154 @@ export interface WelcomeScreenProps {
 // ============================================================================
 
 /**
- * Logo display component.
+ * Logo display component - renders in white on dark background.
+ * Responsive to both width AND height.
+ *
+ * Height thresholds:
+ * - >= 28: Full ASCII logo (12 lines)
+ * - >= 18: Compact text logo (3 lines)
+ * - >= 14: Tiny text logo (3 lines)
+ * - < 14: No logo (hidden)
  */
-function LogoDisplay({ compact = false }: { compact?: boolean }) {
-  const logo = compact ? COMPACT_LOGO : LOGO;
+function LogoDisplay({
+  terminalWidth = 80,
+  terminalHeight = 24
+}: {
+  terminalWidth?: number;
+  terminalHeight?: number;
+}) {
+  // Height-based logo selection (takes priority)
+  // Full logo needs ~28 rows total, compact needs ~18, tiny needs ~14
+  if (terminalHeight < 14) {
+    // Too short - hide logo entirely
+    return null;
+  }
+
+  let logo = LOGO;
+
+  // First check height constraints
+  if (terminalHeight < 18) {
+    logo = TINY_LOGO;
+  } else if (terminalHeight < 28) {
+    logo = COMPACT_LOGO;
+  }
+
+  // Then check width constraints (may further reduce)
+  if (terminalWidth < 45) {
+    logo = TINY_LOGO;
+  } else if (terminalWidth < 60 && logo === LOGO) {
+    logo = COMPACT_LOGO;
+  }
 
   return (
     <box flexDirection="column" alignItems="center">
       <text>
-        <span fg="cyan">{logo}</span>
+        <span fg="white">{logo}</span>
       </text>
     </box>
   );
 }
 
 /**
- * Command hint component.
+ * Tagline pill - "MULTI-AGENT WORKFLOWS" styled like a rounded button with cyan background.
  */
-function CommandHint({
+function TaglinePill({
+  terminalWidth = 80,
+  terminalHeight = 24
+}: {
+  terminalWidth?: number;
+  terminalHeight?: number;
+}) {
+  const text = "M U L T I - A G E N T   W O R K F L O W S";
+  const shortText = "MULTI-AGENT WORKFLOWS";
+  const displayText = terminalWidth < 60 ? shortText : text;
+
+  // Create pill-like appearance with cyan/teal background
+  const padding = 2;
+  const pillContent = " ".repeat(padding) + displayText + " ".repeat(padding);
+
+  // Reduce vertical padding on short terminals
+  const vertPadding = terminalHeight < 20 ? 0 : 1;
+
+  return (
+    <box flexDirection="column" alignItems="center" paddingTop={vertPadding} paddingBottom={vertPadding}>
+      <text>
+        <span bg="#1a4a4a" fg="#4ecdc4">{pillContent}</span>
+      </text>
+    </box>
+  );
+}
+
+/**
+ * Command row in the quick start card.
+ */
+function CommandRow({
   command,
   description,
-  highlight = false,
 }: {
   command: string;
   description: string;
-  highlight?: boolean;
 }) {
   return (
-    <box flexDirection="row" gap={2} paddingLeft={2}>
+    <box flexDirection="row">
       <text>
-        <span fg={highlight ? "green" : "yellow"}>{command.padEnd(24)}</span>
-      </text>
-      <text>
-        <span fg={highlight ? "white" : "gray"}>{description}</span>
+        <span fg="#f0c674">{command.padEnd(18)}</span>
+        <span fg="#888888">{description}</span>
       </text>
     </box>
   );
 }
 
 /**
- * Section title component.
+ * Quick start command card - dark card with border and background.
  */
-function SectionTitle({ title }: { title: string }) {
-  return (
-    <box paddingTop={1} paddingBottom={1}>
-      <text>
-        <span fg="white">{title}</span>
-      </text>
-    </box>
-  );
-}
-
-/**
- * Keyboard shortcut hint.
- */
-function KeyboardShortcut({ keys, action }: { keys: string; action: string }) {
-  return (
-    <box flexDirection="row" gap={1}>
-      <text>
-        <span fg="cyan">[{keys}]</span>
-      </text>
-      <text>
-        <span fg="gray">{action}</span>
-      </text>
-    </box>
-  );
-}
-
-/**
- * Recent session item.
- */
-function RecentSessionItem({
-  name,
-  lastActive,
-  status,
+function QuickStartCard({
+  terminalHeight = 24
 }: {
-  name: string;
-  lastActive: Date;
-  status: string;
+  terminalHeight?: number;
 }) {
-  const timeAgo = formatTimeAgo(lastActive);
-  const statusColor = status === "active" ? "green" : status === "paused" ? "yellow" : "gray";
+  // Reduce padding on short terminals
+  const topPadding = terminalHeight < 20 ? 1 : 2;
+  const innerPadding = terminalHeight < 18 ? 1 : 2;
+  const commandGap = terminalHeight < 18 ? 0 : 1;
 
   return (
-    <box flexDirection="row" gap={2} paddingLeft={4}>
-      <text>
-        <span fg="white">• {name.padEnd(20)}</span>
-      </text>
-      <text>
-        <span fg={statusColor}>{status.padEnd(10)}</span>
-      </text>
-      <text>
-        <span fg="gray">{timeAgo}</span>
-      </text>
+    <box
+      flexDirection="column"
+      alignItems="center"
+      paddingTop={topPadding}
+    >
+      <box
+        flexDirection="column"
+        paddingTop={innerPadding}
+        paddingBottom={innerPadding}
+        paddingLeft={3}
+        paddingRight={3}
+      >
+        {/* Commands */}
+        <CommandRow
+          command="/feature <desc>"
+          description="Start a new feature"
+        />
+        {commandGap > 0 && <box height={commandGap} />}
+        <CommandRow
+          command="/sessions"
+          description="View and resume sessions"
+        />
+
+        {/* Placeholder text inside card */}
+        <box paddingTop={innerPadding}>
+          <text>
+            <span fg="#666666">
+              Type a command or describe what you want to build
+            </span>
+          </text>
+        </box>
+      </box>
     </box>
   );
 }
 
-/**
- * Format a date as "X ago" string.
- */
-function formatTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffMins < 1) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return "yesterday";
-  return `${diffDays}d ago`;
-}
 
 // ============================================================================
 // Welcome Screen Component
@@ -195,14 +228,14 @@ function formatTimeAgo(date: Date): string {
  * Welcome Screen Component
  *
  * Entry point that displays when Claude Squad launches.
- * Shows different content based on initialization state.
+ * Centered layout with logo, tagline, and command card.
  *
  * @example
  * ```tsx
  * <WelcomeScreen
  *   isInitialized={true}
- *   projectPath="/my/project"
- *   recentSessions={[{ id: "123", name: "auth-feature", ... }]}
+ *   projectName="my-awesome-app"
+ *   terminalWidth={120}
  * />
  * ```
  */
@@ -210,17 +243,34 @@ export function WelcomeScreen({
   params,
   isInitialized,
   projectPath,
-  recentSessions,
+  projectName,
   terminalWidth,
-  version,
+  terminalHeight,
 }: WelcomeScreenProps & { params?: Record<string, unknown> }) {
-  // Support both direct props and router params
-  const _isInitialized = isInitialized ?? (params?.isInitialized as boolean) ?? false;
+  // Get actual terminal dimensions from OpenTUI hook
+  const dimensions = useTerminalDimensions();
+
+  // Support both direct props, router params, and hook values
+  const _isInitialized = isInitialized ?? (params?.isInitialized as boolean) ?? true;
   const _projectPath = projectPath ?? (params?.projectPath as string) ?? process.cwd();
-  const _recentSessions = recentSessions ?? (params?.recentSessions as WelcomeScreenProps["recentSessions"]) ?? [];
-  const _terminalWidth = terminalWidth ?? (params?.terminalWidth as number) ?? 80;
-  const _version = version ?? (params?.version as string) ?? "0.1.0";
-  const useCompactLogo = _terminalWidth < 70;
+  const _projectName = projectName ?? (params?.projectName as string) ?? getProjectName(_projectPath);
+  const _terminalWidth = terminalWidth ?? (params?.terminalWidth as number) ?? dimensions.width ?? 80;
+  const _terminalHeight = terminalHeight ?? (params?.terminalHeight as number) ?? dimensions.height ?? 24;
+
+  // Calculate content height based on what will be shown
+  // Full logo: 12, compact: 3, tiny: 3, none: 0
+  let logoHeight = 12;
+  if (_terminalHeight < 14) {
+    logoHeight = 0;
+  } else if (_terminalHeight < 18 || _terminalWidth < 45) {
+    logoHeight = 3;
+  } else if (_terminalHeight < 28 || _terminalWidth < 60) {
+    logoHeight = 3;
+  }
+
+  // Total content: logo + tagline(3) + commands(6) + cursor(2)
+  const contentHeight = logoHeight + 3 + 6 + 2;
+  const topPadding = Math.max(0, Math.floor((_terminalHeight - contentHeight - 1) / 3));
 
   return (
     <box
@@ -228,187 +278,26 @@ export function WelcomeScreen({
       alignItems="center"
       justifyContent="flex-start"
       flexGrow={1}
-      paddingTop={1}
+      paddingTop={topPadding}
     >
-      {/* Logo */}
-      <LogoDisplay compact={useCompactLogo} />
+      {/* Logo - responsive to both width and height */}
+      <LogoDisplay terminalWidth={_terminalWidth} terminalHeight={_terminalHeight} />
 
-      {/* Version */}
-      <box paddingBottom={1}>
-        <text>
-          <span fg="gray">v{_version}</span>
-        </text>
-      </box>
+      {/* Tagline pill */}
+      <TaglinePill terminalWidth={_terminalWidth} terminalHeight={_terminalHeight} />
 
-      {/* Main content based on state */}
-      {_isInitialized ? (
-        <InitializedContent
-          projectPath={_projectPath}
-          recentSessions={_recentSessions}
-        />
-      ) : (
-        <UninitializedContent projectPath={_projectPath} />
-      )}
-
-      {/* Keyboard shortcuts footer */}
-      <box
-        flexDirection="row"
-        gap={3}
-        paddingTop={2}
-        justifyContent="center"
-      >
-        <KeyboardShortcut keys="/" action="Command" />
-        <KeyboardShortcut keys="?" action="Help" />
-        <KeyboardShortcut keys="Ctrl+C" action="Exit" />
-      </box>
+      {/* Quick start card */}
+      <QuickStartCard terminalHeight={_terminalHeight} />
     </box>
   );
 }
 
 /**
- * Content for uninitialized projects.
+ * Extract project name from path.
  */
-function UninitializedContent({ projectPath }: { projectPath: string }) {
-  return (
-    <box flexDirection="column" alignItems="center" gap={1}>
-      {/* Status message */}
-      <box paddingTop={1} paddingBottom={1}>
-        <text>
-          <span fg="yellow">⚠ Squad is not initialized for this project</span>
-        </text>
-      </box>
-
-      {/* Project path */}
-      <box>
-        <text>
-          <span fg="gray">Project: </span>
-          <span fg="white">{truncatePath(projectPath, 50)}</span>
-        </text>
-      </box>
-
-      {/* Init command */}
-      <SectionTitle title="Get Started" />
-      <CommandHint
-        command="/init"
-        description="Initialize Squad for this project"
-        highlight
-      />
-
-      {/* Tip */}
-      <box paddingTop={2}>
-        <text>
-          <span fg="gray">
-            💡 Tip: Run{" "}
-          </span>
-          <span fg="green">/init</span>
-          <span fg="gray">
-            {" "}to configure Squad for your project
-          </span>
-        </text>
-      </box>
-    </box>
-  );
-}
-
-/**
- * Content for initialized projects.
- */
-function InitializedContent({
-  projectPath,
-  recentSessions,
-}: {
-  projectPath: string;
-  recentSessions: WelcomeScreenProps["recentSessions"];
-}) {
-  const hasRecentSessions = recentSessions && recentSessions.length > 0;
-
-  return (
-    <box flexDirection="column" alignItems="center" gap={1}>
-      {/* Welcome message */}
-      <box paddingTop={1} paddingBottom={1}>
-        <text>
-          <span fg="green">✓ Ready to build something great!</span>
-        </text>
-      </box>
-
-      {/* Project path */}
-      <box>
-        <text>
-          <span fg="gray">Project: </span>
-          <span fg="white">{truncatePath(projectPath, 50)}</span>
-        </text>
-      </box>
-
-      {/* Quick Start Commands */}
-      <SectionTitle title="Quick Start" />
-      <CommandHint
-        command="/feature <description>"
-        description="Start a new feature"
-        highlight
-      />
-      <CommandHint
-        command="/sessions"
-        description="View and manage sessions"
-      />
-      <CommandHint command="/agents" description="Manage agents" />
-      <CommandHint command="/help" description="Show all commands" />
-
-      {/* Recent Sessions */}
-      {hasRecentSessions && (
-        <>
-          <SectionTitle title="Recent Sessions" />
-          {recentSessions!.slice(0, 3).map((session) => (
-            <RecentSessionItem
-              key={session.id}
-              name={session.name}
-              lastActive={session.lastActive}
-              status={session.status}
-            />
-          ))}
-          {recentSessions!.length > 3 && (
-            <box paddingLeft={4}>
-              <text>
-                <span fg="gray">
-                  ... and {recentSessions!.length - 3} more. Use /sessions to see all.
-                </span>
-              </text>
-            </box>
-          )}
-        </>
-      )}
-
-      {/* Natural language tip */}
-      <box paddingTop={2}>
-        <text>
-          <span fg="gray">💡 Try: "</span>
-          <span fg="cyan">build a login page</span>
-          <span fg="gray">" or "</span>
-          <span fg="cyan">what's the status?</span>
-          <span fg="gray">"</span>
-        </text>
-      </box>
-    </box>
-  );
-}
-
-/**
- * Truncate a file path for display.
- */
-function truncatePath(path: string, maxLength: number): string {
-  if (path.length <= maxLength) return path;
-
-  const parts = path.split("/");
-  if (parts.length <= 2) return "..." + path.slice(-maxLength + 3);
-
-  // Keep first and last parts, truncate middle
-  const first = parts[0] || "";
-  const last = parts.slice(-2).join("/");
-
-  if (first.length + last.length + 5 > maxLength) {
-    return "..." + path.slice(-maxLength + 3);
-  }
-
-  return `${first}/.../${last}`;
+function getProjectName(path: string): string {
+  const parts = path.split("/").filter(Boolean);
+  return parts[parts.length - 1] || "project";
 }
 
 // ============================================================================
