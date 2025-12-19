@@ -65,6 +65,24 @@ export const HELP_TOPICS: HelpTopic[] = [
     icon: "\u2605", // Star
     defaultExpanded: true,
     screen: HelpScreen.GETTING_STARTED,
+    description: "Learn how to use Claude Squad effectively",
+    content: [
+      "Getting Started with Claude Squad",
+      "==================================",
+      "",
+      "Claude Squad transforms you into an AI-powered development team.",
+      "Multiple specialized agents work in parallel on different aspects",
+      "of your project, each with isolated context and git worktrees.",
+      "",
+      "Choose a topic from the tree to learn more:",
+      "",
+      "  Quick Start Guide     - Get up and running in 5 minutes",
+      "  Your First Feature    - Step-by-step feature walkthrough",
+      "  Understanding Workflows - How agents collaborate",
+      "",
+      "Use arrow keys to navigate the tree on the left.",
+      "Press Enter to select a topic and view its content.",
+    ],
     children: [
       {
         id: "quick-start",
@@ -199,6 +217,26 @@ export const HELP_TOPICS: HelpTopic[] = [
     icon: "\u2318", // Command symbol
     defaultExpanded: false,
     screen: HelpScreen.COMMANDS,
+    description: "Complete reference for all available commands",
+    content: [
+      "Commands Reference",
+      "==================",
+      "",
+      "Claude Squad provides commands for managing your development workflow.",
+      "All commands start with / and can be typed in the command prompt.",
+      "",
+      "Command Categories:",
+      "",
+      "  Session Commands  - Manage sessions (pause, resume, stop)",
+      "  Feature Commands  - Start and complete features",
+      "  Agent Commands    - Interact with AI agents",
+      "  Config Commands   - Configure settings and integrations",
+      "  Info Commands     - View status and help",
+      "  System Commands   - Initialize and exit",
+      "",
+      "Expand each category to see individual commands.",
+      "Use /help <command> for quick help in the terminal.",
+    ],
     children: [
       {
         id: "commands-session",
@@ -630,6 +668,26 @@ export const HELP_TOPICS: HelpTopic[] = [
     label: "Concepts",
     icon: "\u2630", // Trigram
     defaultExpanded: false,
+    description: "Core concepts and architecture of Claude Squad",
+    content: [
+      "Core Concepts",
+      "=============",
+      "",
+      "Understanding these concepts will help you use Claude Squad effectively.",
+      "",
+      "Key Concepts:",
+      "",
+      "  Agents & Roles    - Specialized AI personas (architect, backend, etc.)",
+      "  Skills            - Reusable knowledge modules assigned to agents",
+      "  Workflow Stages   - Sequential/parallel execution phases",
+      "  Review Gates      - Quality checkpoints between stages",
+      "  Git Worktrees     - Isolated branches for parallel agent work",
+      "",
+      "Each agent works in isolation with minimal context,",
+      "communicating via HANDOFF.yaml files between stages.",
+      "",
+      "Select a topic to learn more about each concept.",
+    ],
     children: [
       {
         id: "concept-agents",

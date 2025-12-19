@@ -61,6 +61,9 @@ function AppContent({ state = {}, onExit }: AppProps) {
   // Check if we're on the welcome/dashboard screen (hide chrome)
   const isWelcomeScreen = router.currentScreen === "dashboard";
 
+  // Check if we're on a full-screen overlay (hide command prompt and footer)
+  const isFullScreenOverlay = router.currentScreen === "help";
+
   // Command history for navigation
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
 
@@ -156,21 +159,23 @@ function AppContent({ state = {}, onExit }: AppProps) {
         )}
       </box>
 
-      {/* Command Prompt - full width input box */}
-      <box paddingTop={1} paddingLeft={2} paddingRight={2} paddingBottom={1}>
-        <CommandPrompt
-          prompt="❯"
-          placeholder="Type a command or describe what you want to build..."
-          history={commandHistory}
-          onSubmit={handleSubmit}
-          onAutocomplete={handleAutocomplete}
-          focused={true}
-          enableAutocomplete={true}
-        />
-      </box>
+      {/* Command Prompt - hidden on full-screen overlays */}
+      {!isFullScreenOverlay && (
+        <box paddingTop={1} paddingLeft={2} paddingRight={2} paddingBottom={1}>
+          <CommandPrompt
+            prompt="❯"
+            placeholder="Type a command or describe what you want to build..."
+            history={commandHistory}
+            onSubmit={handleSubmit}
+            onAutocomplete={handleAutocomplete}
+            focused={true}
+            enableAutocomplete={true}
+          />
+        </box>
+      )}
 
-      {/* Footer - hidden on welcome screen */}
-      {!isWelcomeScreen && (
+      {/* Footer - hidden on welcome screen and full-screen overlays */}
+      {!isWelcomeScreen && !isFullScreenOverlay && (
         <Footer
           status={state.status}
           statusType={state.statusType}

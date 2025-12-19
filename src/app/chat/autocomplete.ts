@@ -653,36 +653,36 @@ export class AutocompleteEngine {
    * Get icon for command - uses specific command icons first, then falls back to category.
    */
   private getCommandIcon(category?: string, commandName?: string): string {
-    // Specific icons for each command
+    // Specific icons for each command (using simple Unicode to avoid width issues)
     const commandIcons: Record<string, string> = {
       // Session commands
-      sessions: "📋",
-      pause: "⏸️",
-      resume: "▶️",
-      stop: "⏹️",
+      sessions: "\u2630", // Trigram
+      pause: "\u23F8",    // Pause
+      resume: "\u25B6",   // Play
+      stop: "\u25A0",     // Stop
       // Feature commands
-      feature: "✨",
-      complete: "✅",
-      approve: "👍",
-      reject: "❌",
+      feature: "\u2728",  // Sparkles
+      complete: "\u2714", // Check
+      approve: "\u2714",  // Check
+      reject: "\u2718",   // X
       // Agent commands
-      agents: "🤖",
-      spawn: "🚀",
-      message: "💬",
+      agents: "\u2699",   // Gear
+      spawn: "\u279C",    // Arrow
+      message: "\u2709",  // Envelope
       // Config commands
-      config: "⚙️",
-      skills: "🎯",
-      workflows: "🔄",
-      integrations: "🔌",
+      config: "\u2699",   // Gear
+      skills: "\u2726",   // Star
+      workflows: "\u21BB", // Cycle
+      integrations: "\u2194", // Double arrow
       // Info commands
-      status: "📊",
-      dashboard: "🏠",
-      cost: "💰",
-      help: "❓",
+      status: "\u2139",   // Info
+      dashboard: "\u2302", // Home
+      cost: "\u00A4",     // Currency
+      help: "?",          // Simple question mark
       // System commands
-      init: "🎬",
-      exit: "🚪",
-      clear: "🧹",
+      init: "\u25B6",     // Play
+      exit: "\u2192",     // Arrow
+      clear: "\u2327",    // Clear
     };
 
     // Try command-specific icon first
@@ -690,17 +690,17 @@ export class AutocompleteEngine {
       return commandIcons[commandName];
     }
 
-    // Fall back to category-based icons
+    // Fall back to category-based icons (using simple Unicode)
     const categoryIcons: Record<string, string> = {
-      session: "📁",
-      feature: "✨",
-      agent: "🤖",
-      config: "⚙️",
-      info: "ℹ️",
-      system: "🔧",
+      session: "\u2630", // Trigram
+      feature: "\u2728", // Sparkles
+      agent: "\u2699",   // Gear
+      config: "\u2699",  // Gear
+      info: "\u2139",    // Info
+      system: "\u2692",  // Hammer
     };
 
-    return category ? categoryIcons[category] || "▸" : "▸";
+    return category ? categoryIcons[category] || "\u25B8" : "\u25B8";
   }
 
   /**
