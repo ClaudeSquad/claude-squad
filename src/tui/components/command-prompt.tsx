@@ -342,6 +342,10 @@ export function CommandPrompt({
 
   const showPlaceholder = !value;
 
+  // Show argument hints when command has been committed (has space after command name)
+  // e.g., "/feature " or "/sessions list" - user is now in argument entry mode
+  const isCommandCommitted = value.startsWith("/") && value.includes(" ");
+
   return (
     <box flexDirection="column">
       {/* Autocomplete dropdown (positioned above input) */}
@@ -357,7 +361,7 @@ export function CommandPrompt({
           }}
           onDismiss={() => setShowAutocomplete(false)}
           visible={showAutocomplete}
-          showHints={false}
+          showHints={isCommandCommitted}
         />
       )}
 

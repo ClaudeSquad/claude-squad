@@ -432,7 +432,7 @@ export class AutocompleteEngine {
           type: "command",
           score,
           argumentHints: this.getArgumentHints(cmd),
-          icon: this.getCommandIcon(cmd.category),
+          icon: this.getCommandIcon(cmd.category, cmd.name),
         });
       }
     }
@@ -650,10 +650,48 @@ export class AutocompleteEngine {
   }
 
   /**
-   * Get icon for command category.
+   * Get icon for command - uses specific command icons first, then falls back to category.
    */
-  private getCommandIcon(category?: string): string {
-    const icons: Record<string, string> = {
+  private getCommandIcon(category?: string, commandName?: string): string {
+    // Specific icons for each command
+    const commandIcons: Record<string, string> = {
+      // Session commands
+      sessions: "📋",
+      pause: "⏸️",
+      resume: "▶️",
+      stop: "⏹️",
+      // Feature commands
+      feature: "✨",
+      complete: "✅",
+      approve: "👍",
+      reject: "❌",
+      // Agent commands
+      agents: "🤖",
+      spawn: "🚀",
+      message: "💬",
+      // Config commands
+      config: "⚙️",
+      skills: "🎯",
+      workflows: "🔄",
+      integrations: "🔌",
+      // Info commands
+      status: "📊",
+      dashboard: "🏠",
+      cost: "💰",
+      help: "❓",
+      // System commands
+      init: "🎬",
+      exit: "🚪",
+      clear: "🧹",
+    };
+
+    // Try command-specific icon first
+    if (commandName && commandIcons[commandName]) {
+      return commandIcons[commandName];
+    }
+
+    // Fall back to category-based icons
+    const categoryIcons: Record<string, string> = {
       session: "📁",
       feature: "✨",
       agent: "🤖",
@@ -661,7 +699,8 @@ export class AutocompleteEngine {
       info: "ℹ️",
       system: "🔧",
     };
-    return category ? icons[category] || "▸" : "▸";
+
+    return category ? categoryIcons[category] || "▸" : "▸";
   }
 
   /**
