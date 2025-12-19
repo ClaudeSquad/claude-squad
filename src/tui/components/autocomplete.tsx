@@ -2,12 +2,33 @@
  * Autocomplete Component
  *
  * Dropdown component for displaying autocomplete suggestions.
- * Supports keyboard navigation and selection.
+ * Styled to match the Claude Squad welcome screen theme.
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { useKeyboard } from "@opentui/react";
 import type { Suggestion, ArgumentHint } from "../../app/chat/types.js";
+
+// ============================================================================
+// Theme Colors (matching welcome screen)
+// ============================================================================
+
+const THEME = {
+  // Text colors
+  command: "#f0c674",       // Yellow for commands
+  commandSelected: "#ffd700", // Brighter yellow when selected
+  description: "#666666",   // Muted gray for descriptions
+  descriptionSelected: "#888888", // Slightly brighter when selected
+  accent: "#4ecdc4",        // Cyan/teal accent
+  muted: "#555555",         // Very muted text
+  white: "#ffffff",
+
+  // Background colors
+  bgDark: "#1a1a1a",        // Dark background
+  bgSelected: "#2a3a4a",    // Selected item background (subtle blue tint)
+  bgHeader: "#1a4a4a",      // Header background (matches tagline pill)
+  border: "#3a3a4a",        // Border color
+};
 
 // ============================================================================
 // Types
@@ -42,49 +63,53 @@ export interface AutocompleteProps {
 // ============================================================================
 
 /**
- * Single suggestion item.
+ * Single suggestion item - clean, minimal design.
  */
 function SuggestionItem({
   suggestion,
   isSelected,
   showHints,
+  maxDescWidth,
 }: {
   suggestion: Suggestion;
   isSelected: boolean;
   showHints: boolean;
+  maxDescWidth: number;
 }) {
-  const bgColor = isSelected ? "blue" : undefined;
-  const textColor = isSelected ? "white" : "gray";
+  const bgColor = isSelected ? THEME.bgSelected : undefined;
+  const commandColor = isSelected ? THEME.commandSelected : THEME.command;
+  const descColor = isSelected ? THEME.descriptionSelected : THEME.description;
+
+  // Format description - ensure proper spacing
+  const description = truncateText(suggestion.description, maxDescWidth);
 
   return (
     <box flexDirection="column">
       <box
         flexDirection="row"
-        justifyContent="space-between"
         paddingLeft={1}
         paddingRight={1}
         backgroundColor={bgColor}
       >
-        {/* Command/suggestion text */}
-        <box flexDirection="row" gap={1}>
+        {/* Left side: icon + command */}
+        <box flexDirection="row" width={20}>
           {suggestion.icon && (
             <text>
-              <span>{suggestion.icon}</span>
+              <span fg={THEME.muted}>{suggestion.icon} </span>
             </text>
           )}
           <text>
-            <span fg={isSelected ? "white" : "yellow"}>
-              {suggestion.displayText}
-            </span>
+            <span fg={commandColor}>{suggestion.displayText}</span>
           </text>
         </box>
 
-        {/* Description */}
-        <box maxWidth="60%">
-          <text>
-            <span fg={textColor}>{truncateText(suggestion.description, 40)}</span>
-          </text>
-        </box>
+        {/* Spacer */}
+        <box flexGrow={1} />
+
+        {/* Right side: description */}
+        <text>
+          <span fg={descColor}>{description}</span>
+        </text>
       </box>
 
       {/* Argument hints (only for selected command) */}
@@ -96,7 +121,7 @@ function SuggestionItem({
 }
 
 /**
- * Argument hints display.
+ * Argument hints display - clean layout.
  */
 function ArgumentHintsDisplay({ hints }: { hints: ArgumentHint[] }) {
   const required = hints.filter((h) => h.required);
@@ -105,62 +130,65 @@ function ArgumentHintsDisplay({ hints }: { hints: ArgumentHint[] }) {
   return (
     <box
       flexDirection="column"
-      paddingLeft={2}
+      paddingLeft={3}
       paddingTop={1}
+      paddingBottom={1}
+      marginLeft={2}
       borderStyle="single"
-      borderColor="gray"
+      borderColor={THEME.border}
     >
       {required.length > 0 && (
-        <>
-          <text>
-            <span fg="white">REQUIRED:</span>
-          </text>
-          {required.map((hint) => (
-            <ArgumentHintItem key={hint.name} hint={hint} />
+        <box flexDirection="column">
+          {required.map((hint, idx) => (
+            <ArgumentHintItem key={hint.name} hint={hint} isFirst={idx === 0} />
           ))}
-        </>
+        </box>
       )}
 
       {optional.length > 0 && (
-        <>
+        <box flexDirection="column" paddingTop={required.length > 0 ? 1 : 0}>
           <text>
-            <span fg="gray">OPTIONAL:</span>
+            <span fg={THEME.muted}>Optional:</span>
           </text>
           {optional.map((hint) => (
-            <ArgumentHintItem key={hint.name} hint={hint} />
+            <ArgumentHintItem key={hint.name} hint={hint} isFirst={false} />
           ))}
-        </>
+        </box>
       )}
     </box>
   );
 }
 
 /**
- * Single argument hint item.
+ * Single argument hint item - inline format.
  */
-function ArgumentHintItem({ hint }: { hint: ArgumentHint }) {
+function ArgumentHintItem({ hint, isFirst }: { hint: ArgumentHint; isFirst: boolean }) {
+  // Format: name (type) - description
+  // Example: list
+  const exampleText = hint.examples && hint.examples.length > 0
+    ? `Example: ${hint.examples[0]}`
+    : "";
+
   return (
-    <box flexDirection="column" paddingLeft={2}>
-      <box flexDirection="row" gap={1}>
+    <box flexDirection="column" paddingLeft={1}>
+      <box flexDirection="row">
         <text>
-          <span fg="cyan">{hint.name}</span>
-        </text>
-        <text>
-          <span fg="gray">({hint.type})</span>
+          <span fg={THEME.accent}>{hint.name}</span>
+          <span fg={THEME.muted}> ({hint.type})</span>
+          {hint.required && <span fg={THEME.command}> *</span>}
         </text>
       </box>
       {hint.description && (
         <box paddingLeft={2}>
           <text>
-            <span fg="gray">{hint.description}</span>
+            <span fg={THEME.description}>{hint.description}</span>
           </text>
         </box>
       )}
-      {hint.examples && hint.examples.length > 0 && (
+      {exampleText && (
         <box paddingLeft={2}>
           <text>
-            <span fg="gray">Example: </span>
-            <span fg="white">{hint.examples[0]}</span>
+            <span fg={THEME.muted}>{exampleText}</span>
           </text>
         </box>
       )}
@@ -184,6 +212,7 @@ function truncateText(text: string, maxLength: number): string {
  * Autocomplete Dropdown Component
  *
  * Displays autocomplete suggestions with keyboard navigation support.
+ * Styled to match the Claude Squad welcome screen theme.
  *
  * @example
  * ```tsx
@@ -204,11 +233,14 @@ export function Autocomplete({
   onSelect,
   onDismiss,
   visible = true,
-  maxVisible = 10,
+  maxVisible = 8,
   showHints = true,
 }: AutocompleteProps) {
   // Internal state for uncontrolled mode
   const [internalIndex, setInternalIndex] = useState(0);
+
+  // Fixed description width (avoids potential issues with dimension hooks)
+  const maxDescWidth = 40;
 
   // Use controlled or internal index
   const selectedIndex = controlledIndex ?? internalIndex;
@@ -254,70 +286,61 @@ export function Autocomplete({
     return null;
   }
 
-  // Calculate visible window
-  const visibleSuggestions = suggestions.slice(0, maxVisible);
+  // Calculate visible window (handle scroll offset for many items)
+  const scrollOffset = Math.max(0, Math.min(selectedIndex - Math.floor(maxVisible / 2), suggestions.length - maxVisible));
+  const visibleSuggestions = suggestions.slice(scrollOffset, scrollOffset + maxVisible);
   const hasMore = suggestions.length > maxVisible;
 
   return (
     <box
       flexDirection="column"
       borderStyle="single"
-      borderColor="gray"
-      backgroundColor="black"
+      borderColor={THEME.border}
     >
-      {/* Header */}
-      <box
-        flexDirection="row"
-        justifyContent="space-between"
-        paddingLeft={1}
-        paddingRight={1}
-        backgroundColor="gray"
-      >
-        <text>
-          <span fg="white">Suggestions</span>
-        </text>
-        <text>
-          <span fg="white">{suggestions.length} match{suggestions.length !== 1 ? "es" : ""}</span>
-        </text>
-      </box>
-
       {/* Suggestions list */}
       <box flexDirection="column">
         {visibleSuggestions.map((suggestion, index) => (
           <SuggestionItem
-            key={`${suggestion.text}-${index}`}
+            key={`${suggestion.text}-${scrollOffset + index}`}
             suggestion={suggestion}
-            isSelected={index === selectedIndex}
+            isSelected={scrollOffset + index === selectedIndex}
             showHints={showHints}
+            maxDescWidth={maxDescWidth}
           />
         ))}
       </box>
 
       {/* More indicator */}
       {hasMore && (
-        <box paddingLeft={1}>
+        <box paddingLeft={2}>
           <text>
-            <span fg="gray">... and {suggestions.length - maxVisible} more</span>
+            <span fg={THEME.muted}>
+              {scrollOffset > 0 ? "↑ " : "  "}
+              {suggestions.length} commands
+              {scrollOffset + maxVisible < suggestions.length ? " ↓" : ""}
+            </span>
           </text>
         </box>
       )}
 
-      {/* Navigation hints */}
+      {/* Navigation hints - minimal, matching theme */}
       <box
         flexDirection="row"
         gap={2}
         paddingLeft={1}
         paddingRight={1}
-        backgroundColor="gray"
       >
         <text>
-          <span fg="white">↑↓ Navigate</span>
+          <span fg={THEME.muted}>↑↓</span>
+          <span fg={THEME.description}> Navigate  </span>
         </text>
         <text>
-          <span fg="white">Tab Select</span>
+          <span fg={THEME.muted}>Tab</span>
+          <span fg={THEME.description}> Select  </span>
         </text>
         <text>
-          <span fg="white">Esc Close</span>
+          <span fg={THEME.muted}>Esc</span>
+          <span fg={THEME.description}> Close</span>
         </text>
       </box>
     </box>

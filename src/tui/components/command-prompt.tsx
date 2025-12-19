@@ -357,6 +357,7 @@ export function CommandPrompt({
           }}
           onDismiss={() => setShowAutocomplete(false)}
           visible={showAutocomplete}
+          showHints={false}
         />
       )}
 
